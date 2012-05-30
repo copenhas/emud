@@ -1,4 +1,3 @@
-
 -module(emud_sup).
 
 -behaviour(supervisor).
@@ -24,4 +23,6 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    {ok, { {one_for_one, 5, 10}, [
+        ?CHILD(emud_game_srv, worker)
+    ]} }.

@@ -6,9 +6,17 @@ when_emud_has_not_started_test_() ->
 
 when_emud_starts_test() ->
     {setup,
-        fun start_app/0,
-        fun shutdown_app/1,
-        fun emud_sup_is_alive/0}.
+    fun start_app/0,
+    fun shutdown_app/1, 
+    fun emud_sup_is_alive/0}.
+
+when_emud_is_shutdown_test() ->
+    {setup,
+    fun () ->
+        S = start_app(),
+        shutdown_app(S)
+    end,
+    fun emud_sup_is_not_alive/0}.
 
 start_app() ->
     application:start(emud_app).
