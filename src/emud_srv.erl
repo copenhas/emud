@@ -1,4 +1,4 @@
--module(emud_game_srv).
+-module(emud_srv).
 
 -behaviour(gen_server).
 
