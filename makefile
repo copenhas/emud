@@ -2,7 +2,7 @@
 build: tags
 	rebar compile
 
-test:
+tests:
 	rebar eunit
 
 check:
