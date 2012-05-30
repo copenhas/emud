@@ -1,0 +1,12 @@
+{application, emud,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { emud_app, []}},
+  {env, []}
+ ]}.
