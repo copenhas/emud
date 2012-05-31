@@ -1,9 +1,13 @@
 -module(emud_srv).
 
+-include("../include/emud.hrl").
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/0,
+         terminate/0,
+         connect/0,
+         get_session/0]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -29,7 +33,16 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-        gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+terminate() ->
+    gen_server:cast(?SERVER, terminate).
+
+connect() ->
+    gen_server:call(?SERVER, connect).
+
+get_session() ->
+    gen_server:call(?SERVER, get_session).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -47,7 +60,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-        {ok, #state{}}.
+    emud_session_db:init(),
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -63,9 +77,14 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-        Reply = ok,
-        {reply, Reply, State}.
+handle_call(connect, {Pid, _Tag}, State) ->
+    Session = emud_session_db:create_session(Pid),
+    Reply = {ok, Session#session.id},
+    {reply, Reply, State};
+
+handle_call(get_session, {Pid, _Tag}, State) ->
+    Reply = emud_session_db:get_session(Pid),
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -77,8 +96,8 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
-        {noreply, State}.
+handle_cast(terminate, State) ->
+        {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -105,7 +124,8 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-        ok.
+    emud_session_db:cleanup(),
+    ok.
 
 %%--------------------------------------------------------------------
 %% @private

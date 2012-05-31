@@ -4,13 +4,14 @@
 when_emud_has_not_started_test_() ->
     [fun emud_sup_is_not_alive/0].
 
-when_emud_starts_test() ->
+when_emud_starts_test_() ->
     {setup,
     fun start_app/0,
-    fun shutdown_app/1, 
-    fun emud_sup_is_alive/0}.
+    fun shutdown_app/1, [
+        fun emud_sup_is_alive/0
+    ]}.
 
-when_emud_is_shutdown_test() ->
+when_emud_is_shutdown_test_() ->
     {setup,
     fun () ->
         S = start_app(),
@@ -19,14 +20,13 @@ when_emud_is_shutdown_test() ->
     fun emud_sup_is_not_alive/0}.
 
 start_app() ->
-    application:start(emud_app).
+    ok = application:start(emud).
 
 shutdown_app(_) ->
-    application:stop(emud_app).
+    application:stop(emud).
 
 emud_sup_is_alive() ->
-    Resolved = whereis(emud_sup),
-    ?assert(is_process_alive(Resolved)).
+    ?assertMatch(Pid when is_pid(Pid), whereis(emud_sup)).
 
 emud_sup_is_not_alive() ->
     ?assertEqual(undefined, whereis(emud_sup)).

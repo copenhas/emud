@@ -2,16 +2,16 @@
 build: tags
 	rebar compile
 
-tests:
+tests: build
 	rebar eunit
 
-check:
+check: build
 	dialyzer -r src --src --no_check_plt
 
 shell: build
 	erl -pa ebin -I include
 
-tags:
+tags: 
 	ctags -R -f .tags
 
 clean:
