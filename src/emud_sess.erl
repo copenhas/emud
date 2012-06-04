@@ -15,9 +15,12 @@
          terminate/3,
          code_change/4]).
 
--export([auth/3]).
+-export([auth/3,
+         character/3]).
 
 -define(SERVER, ?MODULE).
+
+-define(HANDLES_INVALID(StateName), StateName(_Cmd, _From, State) -> {reply, {error, invalid_cmd_or_session}, StateName, State}).
 
 -record(state, { id, conn}).
 
@@ -96,11 +99,15 @@ init([SessId, Conn]) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-auth(_Cmd = #cmd{type=new_user, sessid=SessId}, {_Tag, Pid}, State = #state{id = Sessid, conn=Pid}) ->
-    Reply = ok,
-    {reply, Reply, state_name, State};
-auth(_Cmd, _From, State) ->
-    {reply, {error, invalid_cmd}, auth, State}.
+auth(Cmd = #cmd{type=new_user}, _From, State) ->
+    Reply = {ok, proplists:get_value(username, Cmd#cmd.props)},
+    {reply, Reply, auth, State};
+auth(Cmd = #cmd{type=login}, _From, State) ->
+    {reply, ok, character, State};
+?HANDLES_INVALID(auth).
+
+
+?HANDLES_INVALID(character).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -130,7 +137,7 @@ handle_event(_Event, StateName, State) ->
 %%                   {next_state, NextStateName, NextState, Timeout} |
 %%                   {reply, Reply, NextStateName, NextState} |
 %%                   {reply, Reply, NextStateName, NextState, Timeout} |
-%%                   {stop, Reason, NewState} |
+%%   
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------

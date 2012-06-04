@@ -9,7 +9,11 @@ when_session_first_started_test_() ->
     fun stop_session/1, 
     fun (SessInfo) ->
        lists:map(fun (T) -> T(SessInfo) end, [
-         fun unsupported_cmd_returns_error/1
+         fun unsupported_cmd_returns_error/1,
+         fun user_can_create_a_new_user/1,
+         fun user_can_not_login_with_bad_username/1,
+         fun user_can_not_login_with_bad_password/1,
+         fun user_can_login_with_created_account/1
        ])
     end}.
 
@@ -23,14 +27,33 @@ stop_session({_SessId, Sess}) ->
     exit(Sess, normal).
 
 
-% what if bad request?
 unsupported_cmd_returns_error({SessId, Sess}) ->
     Cmd = #cmd{type=unsupported_cmd, sessid = SessId},
-    ?_assertMatch({error, invalid_cmd}, emud_sess:handle_cmd(Sess, Cmd)).
+    ?_assertMatch({error, invalid_cmd_or_session}, emud_sess:handle_cmd(Sess, Cmd)).
 
-% only allows a login or new_user cmd
+user_can_create_a_new_user({SessId, Sess}) ->
+    Cmd = #cmd{type=new_user, sessid = SessId, props = [
+                    {username, <<"test">>}, 
+                    {password, <<"password">>}]},
+    ?_assertMatch({ok, <<"test">>}, emud_sess:handle_cmd(Sess, Cmd)).
 
-% ok, then what once logged in?
+user_can_not_login_with_bad_username({SessId, Sess}) ->
+    Cmd = #cmd{type=new_user, sessid = SessId, props = [
+                    {username, <<"nope">>}, 
+                    {password, <<"password">>}]},
+    ?_assertMatch({error, invalid_creds}, emud_sess:handle_cmd(Sess, Cmd)).
+
+user_can_not_login_with_bad_password({SessId, Sess}) ->
+    Cmd = #cmd{type=new_user, sessid = SessId, props = [
+                    {username, <<"test">>}, 
+                    {password, <<"nope">>}]},
+    ?_assertMatch({error, invalid_creds}, emud_sess:handle_cmd(Sess, Cmd)).
+
+user_can_login_with_created_account({SessId, Sess}) ->
+    Cmd = #cmd{type=login, sessid = SessId, props = [
+                    {username, <<"test">>},
+                    {password, <<"password">>}]},
+    ?_assertMatch(ok, emud_sess:handle_cmd(Sess, Cmd)).
 % new_user -> new_character, login -> pick_character?
 
 % need user record and storage, emud_srv could keep track of active/logged in?

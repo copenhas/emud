@@ -7,5 +7,6 @@
 
 -record(cmd, {
         type, % atom()
-        sessid % sessiondid()
+        sessid, % sessiondid()
+        props % list({key,value})
     }).
