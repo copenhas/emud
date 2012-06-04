@@ -21,8 +21,8 @@ cleanup() ->
 generate_session_id() ->
     {crypto:rand_bytes(6), now()}.
 
-create_session(SessId, Conn, Cmder) when is_tuple(SessId), is_pid(Conn), is_pid(Cmder) ->
-    Session = #session{ id = SessId, conn = Conn, cmder = Cmder },
+create_session(SessId, Conn, Sess) when is_tuple(SessId), is_pid(Conn), is_pid(Sess) ->
+    Session = #session{ id = SessId, conn = Conn, sess = Sess },
     ets:insert(emud_sessions, Session),
     ets:insert(emud_conn2session, {Conn, SessId}),
     Session.

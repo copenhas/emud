@@ -2,9 +2,10 @@
 -record(session, {
         id, % sessionid()
         conn, % pid()
-        cmder % pid()
+        sess % pid()
     }).
 
 -record(cmd, {
-        type % atom()
+        type, % atom()
+        sessid % sessiondid()
     }).

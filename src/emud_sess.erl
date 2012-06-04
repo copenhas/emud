@@ -4,7 +4,8 @@
 -include("../include/emud.hrl").
 
 %% API
--export([start_link/2]).
+-export([start_link/2,
+         handle_cmd/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -35,6 +36,9 @@
 %%--------------------------------------------------------------------
 start_link(SessId, Conn) ->
     gen_fsm:start_link(?MODULE, [SessId, Conn], []).
+
+handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
+    gen_fsm:sync_send_event(Sess, Cmd).
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -92,9 +96,11 @@ init([SessId, Conn]) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-auth(_Cmd = #cmd{type=new_user}, {_Tag, Pid}, State = #state{conn=Pid}) ->
-        Reply = ok,
-        {reply, Reply, state_name, State}.
+auth(_Cmd = #cmd{type=new_user, sessid=SessId}, {_Tag, Pid}, State = #state{id = Sessid, conn=Pid}) ->
+    Reply = ok,
+    {reply, Reply, state_name, State};
+auth(_Cmd, _From, State) ->
+    {reply, {error, invalid_cmd}, auth, State}.
 
 %%--------------------------------------------------------------------
 %% @private
