@@ -29,7 +29,8 @@ init_db() ->
 
 init_session() ->
     init_db(),
-    emud_session_db:create_session(self()).
+    SessionId = emud_session_db:generate_session_id(),
+    emud_session_db:create_session(SessionId, self(), self()).
 
 cleanup_db(_) ->
     emud_session_db:cleanup().

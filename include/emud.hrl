@@ -1,5 +1,10 @@
 
 -record(session, {
         id, % sessionid()
-        conn % pid()
+        conn, % pid()
+        cmder % pid()
+    }).
+
+-record(cmd, {
+        type % atom()
     }).

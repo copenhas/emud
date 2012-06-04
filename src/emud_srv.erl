@@ -78,8 +78,10 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(connect, {Pid, _Tag}, State) ->
-    Session = emud_session_db:create_session(Pid),
-    Reply = {ok, Session#session.id},
+    SessId = emud_session_db:generate_session_id(),
+    {ok, Sess} = emud_sess_sup:start_sess(SessId, Pid),
+    Session = emud_session_db:create_session(SessId, Pid, Sess),
+    Reply = {ok, Session#session.id, Sess},
     {reply, Reply, State};
 
 handle_call(get_session, {Pid, _Tag}, State) ->

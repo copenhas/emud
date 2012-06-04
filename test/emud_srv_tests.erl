@@ -13,6 +13,7 @@ when_srv_is_started_test_() ->
 
 
 start_srv() ->
+    emud_sess_sup:start_link(),
     emud_srv:start_link().
 
 terminate_srv(_) ->
@@ -23,11 +24,11 @@ emud_srv_is_registered() ->
     ?assertMatch(Pid when is_pid(Pid), whereis(emud_srv)).
 
 a_user_can_connect() ->
-    ?assertMatch({ok, _SessionId}, emud_srv:connect()).
+    ?assertMatch({ok, _SessionId, _Sess}, emud_srv:connect()).
 
 user_connects() ->
-    ?assertMatch({ok, _SessionId}, emud_srv:connect()).
+    ?assertMatch({ok, _SessionId, _Sess}, emud_srv:connect()).
 
 user_can_retrieve_their_session() ->
-    {ok, Id} = emud_srv:connect(),
+    {ok, Id, Sess} = emud_srv:connect(),
     ?_assertMatch(Id, emud_srv:get_session()).

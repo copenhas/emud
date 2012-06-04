@@ -3,33 +3,32 @@
 -include("../include/emud.hrl").
 
 -export([init/0,
-         cleanup/0,
-         generate_session_id/0]).
+         cleanup/0]).
 
--export([create_session/1,
+-export([generate_session_id/0,
+         create_session/3,
          get_session/1]).
 
 
 init() ->
     ets:new(emud_sessions, [named_table, {keypos, 2}, {read_concurrency, true}]),
-    ets:new(emud_pid2session, [named_table, {read_concurrency, true}]).
+    ets:new(emud_conn2session, [named_table, {read_concurrency, true}]).
 
 cleanup() ->
     ets:delete(emud_sessions),
-    ets:delete(emud_pid2session).
+    ets:delete(emud_conn2session).
 
 generate_session_id() ->
     {crypto:rand_bytes(6), now()}.
 
-create_session(Conn) when is_pid(Conn) ->
-    SessionId = generate_session_id(),
-    Session = #session{ id = SessionId, conn = Conn },
+create_session(SessId, Conn, Cmder) when is_tuple(SessId), is_pid(Conn), is_pid(Cmder) ->
+    Session = #session{ id = SessId, conn = Conn, cmder = Cmder },
     ets:insert(emud_sessions, Session),
-    ets:insert(emud_pid2session, {Conn, SessionId}),
+    ets:insert(emud_conn2session, {Conn, SessId}),
     Session.
 
 get_session(Conn) when is_pid(Conn) ->
-    case ets:lookup(emud_pid2session, Conn) of
+    case ets:lookup(emud_conn2session, Conn) of
         [] -> no_session;
         [{Conn, SessionId}] -> get_session(SessionId)
     end;

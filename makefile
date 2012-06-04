@@ -8,6 +8,9 @@ tests: build
 check: build
 	dialyzer -r src --src --no_check_plt
 
+types:
+	typer src
+
 shell: build
 	erl -pa ebin -I include
 
