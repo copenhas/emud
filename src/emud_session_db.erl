@@ -7,7 +7,8 @@
 
 -export([generate_session_id/0,
          create_session/3,
-         get_session/1]).
+         get_session/1,
+         remove_session/1]).
 
 
 init() ->
@@ -36,4 +37,13 @@ get_session(SessionId) when is_tuple(SessionId) ->
     case ets:lookup(emud_sessions, SessionId) of
         [] -> no_session;
         [Session] -> Session
+    end.
+
+remove_session(SessionId) when is_tuple(SessionId) ->
+    case get_session(SessionId) of
+        no_session -> ok;
+        Session -> 
+            ets:delete(emud_sessions, SessionId),
+            ets:delete(emud_conn2session, Session#session.conn),
+            ok
     end.

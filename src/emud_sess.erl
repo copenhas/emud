@@ -15,12 +15,11 @@
          terminate/3,
          code_change/4]).
 
--export([auth/3,
-         character/3]).
+-export([auth/3]).
 
 -define(SERVER, ?MODULE).
 
--define(HANDLES_INVALID(StateName), StateName(_Cmd, _From, State) -> {reply, {error, invalid_cmd_or_session}, StateName, State}).
+-define(HANDLES_INVALID(StateName), StateName(_Cmd, _From, State) -> {reply, {error, invalid_cmd}, StateName, State}).
 
 -record(state, { id, conn}).
 
@@ -61,7 +60,7 @@ handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
 %% @end
 %%--------------------------------------------------------------------
 init([SessId, Conn]) ->
-        {ok, auth, #state{id = SessId, conn = Conn}}.
+    {ok, auth, #state{id = SessId, conn = Conn}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -100,14 +99,15 @@ init([SessId, Conn]) ->
 %% @end
 %%--------------------------------------------------------------------
 auth(Cmd = #cmd{type=new_user}, _From, State) ->
-    Reply = {ok, proplists:get_value(username, Cmd#cmd.props)},
+    Usr = #usr{name = ?CMDPROP(Cmd, username), password = ?CMDPROP(Cmd, password)},
+    Reply = emud_srv:new_user(State#state.id, Usr),
     {reply, Reply, auth, State};
+
 auth(Cmd = #cmd{type=login}, _From, State) ->
-    {reply, ok, character, State};
+    {reply, {error, invalid_creds}, auth, State};
+
 ?HANDLES_INVALID(auth).
 
-
-?HANDLES_INVALID(character).
 
 %%--------------------------------------------------------------------
 %% @private

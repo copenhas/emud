@@ -3,6 +3,9 @@ build: tags
 	rebar compile
 
 tests: build
+	@rm -rf test/data
+	@mkdir test/data
+	@escript test/init
 	rebar eunit
 
 check: build
@@ -11,11 +14,14 @@ check: build
 types:
 	typer src
 
-shell: build
-	erl -pa ebin -I include
+shell: build data
+	erl -pa ebin -I include -mnesia dir "data"
 
 tags: 
-	ctags -R -f .tags
+	@ctags -R -f .tags
 
-clean:
+data:
+	mkdir data
+
+clean: 
 	rebar clean

@@ -15,6 +15,16 @@ when_a_session_is_added_test_() ->
         ])
     end}.
 
+when_a_session_is_removed_test_() ->
+    {"when a session is removed", setup,
+    fun init_session/0,
+    fun cleanup_db/1, 
+    fun (Session) ->
+        lists:map(fun (F) -> F(Session) end, [
+            fun when_removed_you_can_not_get_it/1
+        ])
+    end}.
+
 when_empty_db_test_() ->
     {"when the db is empty", setup,
     fun init_db/0,
@@ -41,6 +51,10 @@ you_can_look_up_by_session_id_(Sess) ->
 
 you_can_look_up_by_pid_(Sess) ->
     ?_assertMatch(Sess, emud_session_db:get_session(Sess#session.conn)).
+
+when_removed_you_can_not_get_it(Sess) ->
+   emud_session_db:remove_session(Sess),
+   ?_assertMatch(no_session, emud_session_db:get_session(Sess)). 
 
 looking_up_by_pid_gives_no_session() ->
     ?assertMatch(no_session, emud_session_db:get_session(self())).
