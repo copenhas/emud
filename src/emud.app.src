@@ -2,10 +2,15 @@
  [
   {description, ""},
   {vsn, "1"},
-  {registered, []},
+  {registered, [
+  				emud_sup, 
+  				emud_srv, 
+  				emud_sess_sup
+  			   ]},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  mnesia
                  ]},
   {mod, { emud_app, []}},
   {env, []}

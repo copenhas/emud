@@ -39,6 +39,9 @@
 start_link(SessId, Conn) ->
     gen_fsm:start_link(?MODULE, [SessId, Conn], []).
 
+handle_cmd(Sess, #cmd{type=logout} = Cmd) when is_pid(Sess) ->
+    gen_fsm:sync_send_all_state_event(Sess, Cmd);
+
 handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
     gen_fsm:sync_send_event(Sess, Cmd).
 
@@ -99,12 +102,16 @@ init([SessId, Conn]) ->
 %% @end
 %%--------------------------------------------------------------------
 auth(Cmd = #cmd{type=new_user}, _From, State) ->
-    Usr = #usr{name = ?CMDPROP(Cmd, username), password = ?CMDPROP(Cmd, password)},
+    Usr = #usr{name = ?CMDPROP(Cmd, username), 
+               password = ?CMDPROP(Cmd, password)},
     Reply = emud_srv:new_user(State#state.id, Usr),
     {reply, Reply, auth, State};
 
 auth(Cmd = #cmd{type=login}, _From, State) ->
-    {reply, {error, invalid_creds}, auth, State};
+    Reply = emud_srv:login(State#state.id, 
+                           ?CMDPROP(Cmd, username), 
+                           ?CMDPROP(Cmd, password)),
+    {reply, Reply, auth, State};
 
 ?HANDLES_INVALID(auth).
 
@@ -122,7 +129,7 @@ auth(Cmd = #cmd{type=login}, _From, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_event(_Event, StateName, State) ->
+handle_event(none, StateName, State) ->
         {next_state, StateName, State}.
 
 %%--------------------------------------------------------------------
@@ -141,9 +148,9 @@ handle_event(_Event, StateName, State) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_sync_event(_Event, _From, StateName, State) ->
-        Reply = ok,
-        {reply, Reply, StateName, State}.
+handle_sync_event(#cmd{type=logout} = Cmd, _From, StateName, State) ->
+    Reply = emud_srv:logout(State#state.id),
+    {stop, normal, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -158,7 +165,7 @@ handle_sync_event(_Event, _From, StateName, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, StateName, State) ->
+handle_info(none, StateName, State) ->
         {next_state, StateName, State}.
 
 %%--------------------------------------------------------------------

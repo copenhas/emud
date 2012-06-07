@@ -2,7 +2,8 @@
 -record(session, {
         id, % sessionid()
         conn, % pid()
-        sess % pid()
+        sess, % pid()
+        user % binary()
     }).
 
 % cmd's are how the user causes effects to the system

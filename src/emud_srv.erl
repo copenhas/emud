@@ -9,7 +9,8 @@
          connect/0,
          get_session/0,
          new_user/2,
-         login/3]).
+         login/3,
+         logout/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -51,6 +52,9 @@ new_user(SessId, Usr) when is_record(Usr, usr) ->
 
 login(SessId, Username, Password) when is_binary(Username), is_binary(Password) ->
     gen_server:call(?SERVER, {login, SessId, Username, Password}).
+
+logout(SessId) ->
+    gen_server:call(?SERVER, {logout, SessId}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -102,13 +106,34 @@ handle_call({new_user, SessId, Usr}, {Pid, _Tag}, State) ->
     case emud_session_db:get_session(SessId) of
         no_session -> 
             {reply, {error, unauthorized}, State};
-        #session{conn=Conn, sess=Pid} = Session ->
+        #session{conn=Conn, sess=Pid} ->
             ActiveUsr = Usr#usr{conn = Conn},
-            %emud_user_db:save(Usr),
-            {reply, {ok, Usr#usr.name}, State};
+            emud_user_db:save(ActiveUsr),
+            {reply, {ok, ActiveUsr#usr.name}, State};
         _ ->
             {reply, {error, unauthorized}, State}
-    end.
+    end;
+
+handle_call({login, SessId, Username, Password}, {Pid, _Tag}, State) ->
+    case emud_session_db:get_session(SessId) of
+        no_session -> 
+            {reply, {error, unauthorized}, State};
+        #session{conn=_Conn, sess=Pid} ->
+            case emud_user_db:get(Username) of
+                no_user -> 
+                    {reply, {error, invalid_creds}, State};
+                #usr{name=Username, password=Password} ->
+                    {reply, {ok, Username}, State};
+                _ ->
+                    {reply, {error, invalid_creds}, State}
+            end;
+        _ ->
+            {reply, {error, unauthorized}, State}
+    end;
+
+handle_call({logout, SessId}, _From, State) ->
+    Reply = emud_session_db:remove_session(SessId),
+    {reply, Reply, State}.
 
 
 %%--------------------------------------------------------------------
