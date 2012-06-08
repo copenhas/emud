@@ -39,3 +39,9 @@
         name, % binary()
         room % binary()
     }).
+
+-record(room, {
+        id, % binary() 
+        name, % binary()
+        desc % binary()
+    }).

@@ -3,7 +3,7 @@
 -include("../include/emud.hrl").
 
 -export([get/1,
-         save/1,
+         update/1,
          remove/1]).
 
 get(CharName) when is_binary(CharName) ->
@@ -15,7 +15,11 @@ get(CharName) when is_binary(CharName) ->
         [Char] -> Char 
     end.
 
-save(Char) when is_record(Char, char) ->
+update(Char) when is_record(Char, char) ->
+    case mnesia:dirty_read({char, Char#char.name}) of
+        [] -> throw(no_character);
+        _ -> ok
+    end,
     {atomic, ok} = mnesia:transaction(fun () ->
             mnesia:write(Char) 
         end),
