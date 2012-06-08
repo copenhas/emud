@@ -42,9 +42,6 @@ emud_srv_is_registered() ->
 a_user_can_connect() ->
     ?assertMatch({ok, _SessionId, _Sess}, emud_srv:connect()).
 
-user_connects() ->
-    ?assertMatch({ok, _SessionId, _Sess}, emud_srv:connect()).
-
 random_process_can_not_create_users() ->
     SessId = emud_session_db:generate_session_id(),
     User = #usr{name = <<"test">>, password = <<"password">>},

@@ -55,9 +55,6 @@ you_can_look_up_by_session_id_(Sess) ->
 you_can_look_up_by_pid_(Sess) ->
     ?_assertMatch(Sess, emud_session_db:get_session(Sess#session.conn)).
 
-can_look_up_by_character(Sess) ->
-    ?_assertMatch(Sess, emud_session_db:get_session(Sess#session.character)).
-
 when_removed_you_can_not_get_it(Sess) ->
    emud_session_db:remove_session(Sess),
    ?_assertMatch(no_session, emud_session_db:get_session(Sess)). 
