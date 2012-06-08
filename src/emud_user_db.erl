@@ -2,9 +2,17 @@
 
 -include("../include/emud.hrl").
 
--export([save/1,
+-export([insert/1,
+         save/1,
          remove/1,
          get/1]).
+
+
+insert(Usr) when is_record(Usr, usr) ->
+    case ?MODULE:get(Usr#usr.name) of
+        no_user -> save(Usr);
+        _ -> username_taken
+    end.
 
 save(Usr) when is_record(Usr, usr) ->
     {atomic, ok} = mnesia:transaction(fun () ->
@@ -24,5 +32,5 @@ get(Username) when is_binary(Username) ->
     end),
     case Records of
         [] -> no_user;
-        [Usr] -> Usr
+        [Usr] -> Usr 
     end.

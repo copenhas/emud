@@ -8,4 +8,5 @@ init() ->
     mnesia:start(),
 
     mnesia:create_table(usr, [{attributes, record_info(fields, usr)}]),
+    mnesia:create_table(char, [{attributes, record_info(fields, char)}]),
     ok.

@@ -106,10 +106,9 @@ handle_call({new_user, SessId, Usr}, {Pid, _Tag}, State) ->
     case emud_session_db:get_session(SessId) of
         no_session -> 
             {reply, {error, unauthorized}, State};
-        #session{conn=Conn, sess=Pid} ->
-            ActiveUsr = Usr#usr{conn = Conn},
-            emud_user_db:save(ActiveUsr),
-            {reply, {ok, ActiveUsr#usr.name}, State};
+        #session{sess=Pid} ->
+            emud_user_db:insert(Usr),
+            {reply, {ok, Usr#usr.name}, State};
         _ ->
             {reply, {error, unauthorized}, State}
     end;
@@ -118,11 +117,13 @@ handle_call({login, SessId, Username, Password}, {Pid, _Tag}, State) ->
     case emud_session_db:get_session(SessId) of
         no_session -> 
             {reply, {error, unauthorized}, State};
-        #session{conn=_Conn, sess=Pid} ->
+        #session{conn=_Conn, sess=Pid} = Session ->
             case emud_user_db:get(Username) of
                 no_user -> 
                     {reply, {error, invalid_creds}, State};
-                #usr{name=Username, password=Password} ->
+                #usr{name=Username, password=Password} = Usr ->
+                    LoggedIn = Session#session{user = Usr},
+                    emud_session_db:update_session(LoggedIn),
                     {reply, {ok, Username}, State};
                 _ ->
                     {reply, {error, invalid_creds}, State}

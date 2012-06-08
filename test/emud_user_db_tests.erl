@@ -17,6 +17,7 @@ when_the_db_has_a_user_test_() ->
     fun remove_user/1, 
     fun (Usr) ->
         lists:map(fun (T) -> T(Usr) end, [
+            fun can_not_insert_same_user/1,
             fun can_remove_a_user/1
         ])
     end}.
@@ -43,6 +44,9 @@ can_add_a_new_user() ->
 
 can_remove_non_existent_user() ->
     ?assertEqual(ok, emud_user_db:remove(<<"nothing to see here">>)).
+
+can_not_insert_same_user(Usr) ->
+    ?_assertEqual(username_taken, emud_user_db:insert(Usr)).
 
 can_remove_a_user(#usr{name=Username}) ->
     ?_assertEqual(ok, emud_user_db:remove(Username)).

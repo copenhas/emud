@@ -5,7 +5,8 @@
 
 %% API
 -export([start_link/2,
-         handle_cmd/2]).
+         handle_cmd/2,
+         get_state/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -15,7 +16,10 @@
          terminate/3,
          code_change/4]).
 
--export([auth/3]).
+-export([auth/3,
+         pick_character/3,
+         new_character/3,
+         in_game/3]).
 
 -define(SERVER, ?MODULE).
 
@@ -44,6 +48,9 @@ handle_cmd(Sess, #cmd{type=logout} = Cmd) when is_pid(Sess) ->
 
 handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
     gen_fsm:sync_send_event(Sess, Cmd).
+
+get_state(Sess, SessId) when is_pid(Sess) ->
+    gen_fsm:sync_send_all_state_event(Sess, {get_state, SessId}).
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -101,19 +108,61 @@ init([SessId, Conn]) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-auth(Cmd = #cmd{type=new_user}, _From, State) ->
+auth(Cmd = #cmd{type=new_user, sessid=Id}, _From, #state{id=Id} = State) ->
     Usr = #usr{name = ?CMDPROP(Cmd, username), 
                password = ?CMDPROP(Cmd, password)},
-    Reply = emud_srv:new_user(State#state.id, Usr),
+    Reply = emud_srv:new_user(Id, Usr),
     {reply, Reply, auth, State};
 
-auth(Cmd = #cmd{type=login}, _From, State) ->
-    Reply = emud_srv:login(State#state.id, 
+auth(Cmd = #cmd{type=login, sessid=Id}, _From, #state{id=Id} = State) ->
+    Response = emud_srv:login(Id,
                            ?CMDPROP(Cmd, username), 
                            ?CMDPROP(Cmd, password)),
-    {reply, Reply, auth, State};
+    case Response of
+        {ok, _} -> {reply, Response, pick_character, State};
+        _ -> {reply, Response, auth, State}
+    end;
 
 ?HANDLES_INVALID(auth).
+
+
+pick_character(_Cmd = #cmd{type=new_character, sessid=Id}, _From, #state{id=Id} = State) ->
+    {reply, ok, new_character, State}; 
+
+pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} = State) ->
+    Sess = emud_session_db:get_session(Id),
+    Usr = Sess#session.user,
+    Char = ?CMDPROP(Cmd, character),
+    case {Usr#usr.character, emud_char_db:get(Char)} of
+        {Char, #char{}} ->
+            JoinedGame = Sess#session{character = Char},
+            emud_session_db:update_session(JoinedGame),
+            {reply, {ok, Char}, in_game, State};
+        _ ->
+            {reply, {error, no_character}, pick_character, State}
+    end;
+
+?HANDLES_INVALID(pick_character).
+
+
+new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id} = State) ->
+    Char = #char{name= ?CMDPROP(Cmd, name), room= <<"game start">>},
+    Sess = emud_session_db:get_session(Id),
+    Usr = Sess#session.user,
+    UpdatedUsr = Usr#usr{character = Char#char.name},
+    UpdatedSess = Sess#session{user = UpdatedUsr},
+    emud_user_db:save(UpdatedUsr),
+    emud_char_db:save(Char),
+    emud_session_db:update_session(UpdatedSess),
+    {reply, {ok, Char#char.name}, pick_character, State};
+
+?HANDLES_INVALID(new_character).
+
+
+in_game(none, _From, State) ->
+    {reply, ok, in_game, State};
+
+?HANDLES_INVALID(in_game).
 
 
 %%--------------------------------------------------------------------
@@ -148,9 +197,12 @@ handle_event(none, StateName, State) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_sync_event(#cmd{type=logout} = Cmd, _From, StateName, State) ->
+handle_sync_event(#cmd{type=logout} = _Cmd, _From, _StateName, State) ->
     Reply = emud_srv:logout(State#state.id),
-    {stop, normal, Reply, State}.
+    {stop, normal, Reply, State};
+
+handle_sync_event({get_state, _SessId}, _From, StateName, State) ->
+    {reply, StateName, StateName, State}.
 
 %%--------------------------------------------------------------------
 %% @private
