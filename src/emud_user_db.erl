@@ -22,6 +22,10 @@ save(Usr) when is_record(Usr, usr) ->
 
 remove(Username) when is_binary(Username) ->
     {atomic, ok} = mnesia:transaction(fun () ->
+        case mnesia:read({usr, Username}) of
+            [] -> ok;
+            [Usr] -> emud_char_db:remove(Usr#usr.character)
+        end,
         mnesia:delete({usr, Username})
     end),
     ok.

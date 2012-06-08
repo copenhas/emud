@@ -49,6 +49,17 @@ when_a_user_is_create_a_new_character_test_() ->
        ])
     end}.
 
+when_a_user_is_in_game_test_() ->
+    {"when a user is in game", setup,
+    fun join_game/0,
+    fun remove_account/1,
+    fun (SessInfo) ->
+       lists:map(fun (T) -> T(SessInfo) end, [
+        fun they_can_look_around/1,
+        fun recieves_a_msg_back_from_looking/1
+       ])
+    end}.
+
 
 start_session() ->
     helper:start_deps(),
@@ -78,6 +89,15 @@ setup_new_char() ->
     ok = emud_sess:handle_cmd(Sess, NewChar),
     {SessId, Sess, Username}.
 
+join_game() ->
+    {SessId, Sess, Username} = setup_new_char(),
+    PickName = #cmd{type=character_name, sessid = SessId, props = [
+                    {name, <<"test character">>}]},   
+    {ok, <<"test character">>} = emud_sess:handle_cmd(Sess, PickName),
+    JoinGame = #cmd{type=pick_character, sessid = SessId, props = [
+                    {character, <<"test character">>}]},
+    {ok, <<"test character">>} = emud_sess:handle_cmd(Sess, JoinGame),
+    {SessId, Sess, Username}.
 
 stop_session({_SessId, _Sess}) ->
     emud_user_db:remove(<<"test">>),
@@ -139,4 +159,17 @@ finally_they_can_pick_the_character_to_join_the_game({SessId, Sess, _Username}) 
                     {character, <<"test character">>}]},
         ?assertMatch({ok, <<"test character">>}, emud_sess:handle_cmd(Sess, Cmd)),
         ?assertMatch(in_game, emud_sess:get_state(Sess, SessId))
+    end.
+
+they_can_look_around({SessId, Sess, _Username}) ->
+    Look = #cmd{type=look, sessid = SessId},
+    ?_assertEqual(ok, emud_sess:handle_cmd(Sess, Look)).
+
+recieves_a_msg_back_from_looking({_SessId, _Sess, _Username}) ->
+    fun () ->
+        receive 
+            {emud_msg, _Ref, Msg} -> ?assertMatch(#msg{type=look}, Msg)
+        after 500 ->
+            throw(no_msg_found)
+        end
     end.

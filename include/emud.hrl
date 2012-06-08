@@ -7,24 +7,26 @@
         character % binary(), only if they are actively in game
     }).
 
+
+-define(CMDPROP(Cmd, Key), proplists:get_value(Key, Cmd#cmd.props)).
+
 % cmd's are how the user causes effects to the system
 -record(cmd, {
         type, % atom()
         sessid, % sessiondid()
-        props % list({key,value})
+        props=[] % list({key,value})
     }).
 
 % system msg which can be generated from anything, 
 % gets sent to the connection process for rendering 
-% to the user. source is atom() for system generated 
-% and binary() for character
+% to the user. 
 -record(msg, {
-        name, % atom()
-        source, % atom() | binary()
-        props % list({key, value})
+        type, % atom()
+        cmdref, % reference(), if the msg is a direct result of a user's command
+        source, % atom() | binary(), atom() if it's system; binary() for user/room
+        props=[] % list({key, value})
     }).
 
--define(CMDPROP(Cmd, Key), proplists:get_value(Key, Cmd#cmd.props)).
 
 % the user record mostly for auth and tracking if someone's online
 -record(usr, {

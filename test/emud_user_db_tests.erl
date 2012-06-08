@@ -18,7 +18,8 @@ when_the_db_has_a_user_test_() ->
     fun (Usr) ->
         lists:map(fun (T) -> T(Usr) end, [
             fun can_not_insert_same_user/1,
-            fun can_remove_a_user/1
+            fun can_remove_a_user/1,
+            fun removes_users_character_too/1
         ])
     end}.
 
@@ -28,7 +29,9 @@ setup() ->
 
 
 add_user() ->
-    Usr = #usr{name= <<"test">>, password= <<"password">>},
+    Char = #char{name= <<"character">>},
+    Usr = #usr{name= <<"test">>, password= <<"password">>, character= <<"character">>},
+    ok = emud_char_db:save(Char),
     ok = emud_user_db:save(Usr),
     Usr.
 
@@ -50,3 +53,6 @@ can_not_insert_same_user(Usr) ->
 
 can_remove_a_user(#usr{name=Username}) ->
     ?_assertEqual(ok, emud_user_db:remove(Username)).
+
+removes_users_character_too(#usr{character=CharName}) ->
+    ?_assertEqual(no_character, emud_char_db:get(CharName)).

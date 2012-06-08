@@ -159,10 +159,9 @@ new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id}
 ?HANDLES_INVALID(new_character).
 
 
-in_game(none, _From, State) ->
-    {reply, ok, in_game, State};
-
-?HANDLES_INVALID(in_game).
+in_game(#cmd{type=look, sessid=Id}, {Pid, _Tag}, #state{id=Id} = State) ->
+    emud_conn:send(Pid, #msg{type=look}),
+    {reply, ok, in_game, State}.
 
 
 %%--------------------------------------------------------------------

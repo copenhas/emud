@@ -13,9 +13,10 @@
 
 
 init() ->
-    ets:new(emud_sessions, [named_table, {keypos, 2}, public, {read_concurrency, true}]),
-    ets:new(emud_conn2session, [named_table, public, {read_concurrency, true}]),
-    ets:new(emud_char2session, [named_table, public, {read_concurrency, true}]).
+    Opts = [named_table, public, {read_concurrency, true}, {write_concurrency, true}],
+    ets:new(emud_sessions, [{keypos, 2}|Opts] ),
+    ets:new(emud_conn2session, Opts),
+    ets:new(emud_char2session, Opts).
 
 cleanup() ->
     ets:delete(emud_sessions),

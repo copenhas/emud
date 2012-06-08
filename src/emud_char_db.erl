@@ -21,6 +21,8 @@ save(Char) when is_record(Char, char) ->
         end),
     ok.
 
+remove(undefined) ->
+    ok;
 remove(CharName) when is_binary(CharName) ->
     {atomic, ok} = mnesia:transaction(fun () ->
         mnesia:delete({char, CharName})
