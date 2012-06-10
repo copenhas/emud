@@ -133,7 +133,7 @@ pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} 
     Sess = emud_session_db:get_session(Id),
     Usr = Sess#session.user,
     Char = ?CMDPROP(Cmd, character),
-    case {Usr#usr.character, emud_char_db:get(Char)} of
+    case {Usr#usr.character, emud_char:get(Char)} of
         {Char, #char{}} ->
             JoinedGame = Sess#session{character = Char},
             emud_session_db:update_session(JoinedGame),

@@ -40,8 +40,11 @@
         room % binary()
     }).
 
+-define(EXITTO(Rm, Exit), proplists:get_value(Exit, Rm#room.exits)).
+
 -record(room, {
         id, % binary() 
         name, % binary()
-        desc % binary()
+        desc, % binary()
+        exits=[] % list({atom(), binary()})
     }).

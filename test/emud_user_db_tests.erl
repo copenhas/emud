@@ -51,7 +51,7 @@ can_add_a_character(Usr) ->
     fun () ->
         Char = #char{name= <<"character">>},
         {ok, UUsr, UChar} = emud_user_db:add_char(Usr, Char),
-        ?assertEqual(UChar, emud_char_db:get(UChar#char.name)),
+        ?assertEqual(UChar, emud_char:get(UChar#char.name)),
         ?assertEqual(UChar#char.name, UUsr#usr.character)
     end.
 
@@ -62,4 +62,4 @@ can_remove_a_user(#usr{name=Username}) ->
     ?_assertEqual(ok, emud_user_db:remove(Username)).
 
 removes_users_character_too(_) ->
-    ?_assertEqual(no_character, emud_char_db:get(<<"character">>)).
+    ?_assertEqual(no_character, emud_char:get(<<"character">>)).

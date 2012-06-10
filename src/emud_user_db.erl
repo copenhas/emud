@@ -25,7 +25,7 @@ remove(Username) when is_binary(Username) ->
     {atomic, ok} = mnesia:transaction(fun () ->
         case mnesia:read({usr, Username}) of
             [] -> ok;
-            [Usr] -> emud_char_db:remove(Usr#usr.character)
+            [Usr] -> emud_char:remove(Usr#usr.character)
         end,
         mnesia:delete({usr, Username})
     end),
@@ -44,7 +44,7 @@ add_char(Usr, #char{name=CharName} = Char) when is_record(Usr, usr) ->
     UUsr = case Usr#usr.character of
         CharName -> Usr;
         _ -> 
-            ok = emud_char_db:remove(Usr#usr.character),
+            ok = emud_char:remove(Usr#usr.character),
             Usr#usr{character = Char#char.name}
     end,
     {atomic, ok} = mnesia:transaction(fun () ->
