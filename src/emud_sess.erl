@@ -132,12 +132,13 @@ pick_character(_Cmd = #cmd{type=new_character, sessid=Id}, _From, #state{id=Id} 
 pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} = State) ->
     Sess = emud_session_db:get_session(Id),
     Usr = Sess#session.user,
-    Char = ?CMDPROP(Cmd, character),
-    case {Usr#usr.character, emud_char:get(Char)} of
-        {Char, #char{}} ->
-            JoinedGame = Sess#session{character = Char},
+    CharName = ?CMDPROP(Cmd, character),
+    case {Usr#usr.character, emud_char:get(CharName)} of
+        {CharName, Char} ->
+            JoinedGame = Sess#session{character = CharName},
             emud_session_db:update_session(JoinedGame),
-            {reply, {ok, Char}, in_game, State};
+            emud_char:join_game(Char),
+            {reply, {ok, CharName}, in_game, State};
         _ ->
             {reply, {error, no_character}, pick_character, State}
     end;
@@ -156,8 +157,8 @@ new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id}
 ?HANDLES_INVALID(new_character).
 
 
-in_game(#cmd{type=look, sessid=Id}, {Pid, _Tag}, #state{id=Id} = State) ->
-    emud_conn:send(Pid, #msg{type=look}),
+in_game(#cmd{sessid=Id} = Cmd, {_Pid, Tag}, #state{id=Id} = State) ->
+    {ok, _CmdId} = emud_cmd_sup:start_cmd(Id, Tag, Cmd),
     {reply, ok, in_game, State}.
 
 
@@ -193,7 +194,15 @@ handle_event(none, StateName, State) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_sync_event(#cmd{type=logout} = _Cmd, _From, _StateName, State) ->
+handle_sync_event(#cmd{type=logout} = _Cmd, _From, _StateName, #state{id=Id} = State) ->
+    Sess = emud_session_db:get_session(Id),
+    ok = case Sess#session.character of
+        undefined -> ok;
+        CharName -> 
+            Char = emud_char:get(CharName),
+            UChar = emud_char:leave_game(Char),
+            emud_char:update(UChar)
+    end,
     Reply = emud_srv:logout(State#state.id),
     {stop, normal, Reply, State};
 

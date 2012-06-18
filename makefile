@@ -19,7 +19,7 @@ shell: build data
 	erl -pa ebin -I include -eval "mnesia:start()" -mnesia dir "data"
 
 tags: 
-	@ctags -R -f .tags
+	@ctags -R -f .tags src/ test/ priv/ include/
 
 data:
 	mkdir data

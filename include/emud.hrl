@@ -24,6 +24,7 @@
         type, % atom()
         cmdref, % reference(), if the msg is a direct result of a user's command
         source, % atom() | binary(), atom() if it's system; binary() for user/room
+        text, % binary(), base text or message
         props=[] % list({key, value})
     }).
 

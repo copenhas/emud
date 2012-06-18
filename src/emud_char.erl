@@ -6,6 +6,7 @@
          update/1,
          remove/1,
          join_game/1,
+         leave_game/1,
          move/2]).
 
 get(CharName) when is_binary(CharName) ->
@@ -35,8 +36,12 @@ remove(CharName) when is_binary(CharName) ->
     end),
     ok.
 
-join_game(Char) when is_record(Char, char) ->
+join_game(Char) ->
     emud_room:enter(Char#char.room, Char),
+    Char.
+
+leave_game(Char) ->
+    emud_room:leave(Char#char.room, Char),
     Char.
 
 move(Char, Exit) ->

@@ -49,16 +49,42 @@ when_a_user_is_create_a_new_character_test_() ->
        ])
     end}.
 
+when_a_user_joins_the_game_test_() ->
+    {"when a user joins the game", setup,
+    fun join_game/0,
+    fun remove_account/1,
+    fun (SessInfo) ->
+       lists:map(fun (T) -> T(SessInfo) end, [
+        fun room_has_them_as_an_occupant/1,
+        fun current_state_is_in_game/1,
+        fun logging_out_also_removes_them_from_game/1
+       ])
+    end}.
+
+
 when_a_user_is_in_game_test_() ->
     {"when a user is in game", setup,
     fun join_game/0,
     fun remove_account/1,
     fun (SessInfo) ->
        lists:map(fun (T) -> T(SessInfo) end, [
-        fun they_can_look_around/1,
-        fun recieves_a_msg_back_from_looking/1
+        fun a_bad_command_does_not_kill_the_session/1
        ])
     end}.
+
+
+can_execute_a_cmd_and_recieve_msg_test() ->
+    % had to put all the setup and clean in the test 
+    %due to mismatched Pids
+    Ctxt = {SessId, Sess, _Username} = join_game(),
+    Look = #cmd{type=look, sessid = SessId},
+    ?assertEqual(ok, emud_sess:handle_cmd(Sess, Look)),
+    receive 
+        {emud_msg, _Ref, Msg} -> ?assertMatch(#msg{type=look}, Msg)
+    after 1000 ->
+        throw(no_msg_found)
+    end,
+    remove_account(Ctxt).
 
 
 start_session() ->
@@ -137,7 +163,10 @@ user_can_login({SessId, Sess, Username}) ->
 
 user_can_logout({SessId, Sess, _Username}) ->
     Cmd = #cmd{type=logout, sessid = SessId},
-    ?_assertMatch(ok, emud_sess:handle_cmd(Sess, Cmd)).
+    fun () ->
+        ?assertMatch(ok, emud_sess:handle_cmd(Sess, Cmd)),
+        ?assertNot(erlang:is_process_alive(Sess))
+    end.
 
 can_not_pick_a_non_existent_character({SessId, Sess, _Username}) ->
     Cmd = #cmd{type=pick_character, sessid = SessId, props = [
@@ -161,15 +190,26 @@ finally_they_can_pick_the_character_to_join_the_game({SessId, Sess, _Username}) 
         ?assertMatch(in_game, emud_sess:get_state(Sess, SessId))
     end.
 
-they_can_look_around({SessId, Sess, _Username}) ->
-    Look = #cmd{type=look, sessid = SessId},
-    ?_assertEqual(ok, emud_sess:handle_cmd(Sess, Look)).
+room_has_them_as_an_occupant(_) ->
+    Char = emud_char:get(<<"test character">>),
+    RmId = Char#char.room,
+    ?_assertMatch([<<"test character">>], emud_room:occupants(RmId)).
 
-recieves_a_msg_back_from_looking({_SessId, _Sess, _Username}) ->
+current_state_is_in_game({SessId, Sess, _Username}) ->
+    ?_assertMatch(in_game, emud_sess:get_state(Sess, SessId)).
+
+logging_out_also_removes_them_from_game({SessId, Sess, _Username}) ->
+    Cmd = #cmd{type=logout, sessid = SessId},
+    Char = emud_char:get(<<"test character">>),
+    RmId = Char#char.room,
     fun () ->
-        receive 
-            {emud_msg, _Ref, Msg} -> ?assertMatch(#msg{type=look}, Msg)
-        after 500 ->
-            throw(no_msg_found)
-        end
+        ?assertMatch(ok, emud_sess:handle_cmd(Sess, Cmd)),
+        ?assertMatch([], emud_room:occupants(RmId))
+    end.
+
+a_bad_command_does_not_kill_the_session({SessId, Sess, _Username}) ->
+    fun () ->
+        ?assertMatch(in_game, emud_sess:get_state(Sess, SessId)),
+        emud_sess:handle_cmd(Sess, #cmd{type=move, sessid=SessId, props=[{exit, none}]}),
+        ?assertMatch(in_game, emud_sess:get_state(Sess, SessId))
     end.

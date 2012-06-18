@@ -25,5 +25,6 @@ start_link() ->
 init([]) ->
     {ok, { {one_for_one, 5, 10}, [
         ?CHILD(emud_srv, worker),
-        ?CHILD(emud_sess_sup, supervisor)
+        ?CHILD(emud_sess_sup, supervisor),
+        ?CHILD(emud_cmd_sup, supervisor)
     ]} }.

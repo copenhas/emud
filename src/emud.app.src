@@ -5,8 +5,9 @@
   {registered, [
   				emud_sup, 
   				emud_srv, 
-  				emud_sess_sup
-  			   ]},
+  				emud_sess_sup,
+          emud_cmd_sup
+  			 ]},
   {applications, [
                   kernel,
                   stdlib,

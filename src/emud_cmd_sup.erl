@@ -1,12 +1,11 @@
--module(emud_sess_sup).
+-module(emud_cmd_sup).
 
 -behaviour(supervisor).
+-include("../include/emud.hrl").
 
 %% API
--export([start_link/0]).
-
--export([start_sess/2,
-         stop_sess/1]).
+-export([start_link/0,
+         start_cmd/3]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -25,13 +24,11 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+        supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_sess(SessId, Conn) when is_pid(Conn) ->
-    supervisor:start_child(?SERVER, [SessId, Conn]).
+start_cmd(SessId, Ref, Cmd) when is_reference(Ref), is_record(Cmd, cmd) ->
+    supervisor:start_child(?SERVER, [SessId, Ref, Cmd]).
 
-stop_sess(Pid) ->
-    supervisor:terminate_child(?SERVER, Pid).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -57,12 +54,12 @@ init([]) ->
 
         SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
-        Restart = transient,
-        Shutdown = 500,
+        Restart = temporary,
+        Shutdown = brutal_kill,
         Type = worker,
 
-        AChild = {emud_sess, {emud_sess, start_link, []},
-                          Restart, Shutdown, Type, [emud_sess]},
+        AChild = {emud_cmd, {emud_cmd, spawn_link, []},
+                          Restart, Shutdown, Type, [emud_cmd]},
 
         {ok, {SupFlags, [AChild]}}.
 
