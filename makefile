@@ -3,8 +3,8 @@ build: tags
 	rebar compile
 
 tests: build
-	@rm -rf .eunit/Mnesia.nonode@nohost
-	@mkdir -p .eunit/Mnesia.nonode@nohost
+	@rm -rf .test/Mnesia.nonode@nohost
+	@mkdir -p .test/Mnesia.nonode@nohost
 	@escript test/init
 
 	rebar eunit

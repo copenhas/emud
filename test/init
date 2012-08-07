@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %% vim: set filetype=erlang :
-%%! -pa ebin -I include -mnesia dir ".eunit/Mnesia.nonode@nohost"
+%%! -pa ebin -I include -mnesia dir ".test/Mnesia.nonode@nohost"
 
 main([]) ->
 	emud_init:init().

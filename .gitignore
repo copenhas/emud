@@ -4,3 +4,4 @@ ebin
 .tags_sorted_by_file
 test/data/*
 data
+.test
