@@ -2,54 +2,88 @@
 
 -include("../include/emud.hrl").
 
--export([insert/1,
-         save/1,
+-export([save/1,
          remove/1,
-         get/1,
-         add_char/2]).
+         lookup/1,
+         retrieve/1]).
 
-
-insert(Usr) when is_record(Usr, usr) ->
-    case ?MODULE:get(Usr#usr.name) of
-        no_user -> save(Usr);
-        _ -> username_taken
-    end.
-
-save(Usr) when is_record(Usr, usr) ->
-    {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(Usr) 
-        end),
-    ok.
-
-remove(Username) when is_binary(Username) ->
-    {atomic, ok} = mnesia:transaction(fun () ->
-        case mnesia:read({usr, Username}) of
-            [] -> ok;
-            [Usr] -> emud_char:remove(Usr#usr.character)
-        end,
-        mnesia:delete({usr, Username})
-    end),
-    ok.
-
-get(Username) when is_binary(Username) ->
-    {atomic, Records} = mnesia:transaction(fun () ->
-        mnesia:read({usr, Username})
-    end),
-    case Records of
-        [] -> no_user;
-        [Usr] -> Usr 
-    end.
-
-add_char(Usr, #char{name=CharName} = Char) when is_record(Usr, usr) ->
-    UUsr = case Usr#usr.character of
-        CharName -> Usr;
-        _ -> 
-            ok = emud_char:remove(Usr#usr.character),
-            Usr#usr{character = Char#char.name}
+%% ---------- Save ---------- 
+    
+save(Rec) when is_record(Rec, char) ->
+    case mnesia:dirty_read({char, Rec#char.name}) of
+        [] -> throw(no_character);
+        _ -> ok
     end,
     {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(UUsr),
-            mnesia:write(Char) 
+            mnesia:write(Rec) 
         end),
-    {ok, UUsr, Char}.
+    ok;
 
+%% Case where multiple saves will be in one transaction.
+%% found a case in source.
+save(Rec) when is_list(Rec) -> 
+    {atomic, ok} = mnesia:transaction(fun () ->
+            [Head|_] = [mnesia:write(R) || R <- Rec],
+            Head
+        end),
+    ok;
+
+save(Rec) -> 
+    {atomic, ok} = mnesia:transaction(fun () ->
+            mnesia:write(Rec) 
+        end),
+    ok.
+
+%% ---------- Retrieve ---------- 
+
+retrieve(Crit) -> 
+    NotFoundResponse = [{char, no_character}, {room, no_room},{usr, no_user}],
+    case Crit of
+        {Table, Index, Value} -> 
+            throw(not_impl);
+        {Table, Value} ->
+            {atomic, Records} = mnesia:transaction(fun () ->
+                mnesia:read({Table, Value})
+            end),
+            case Records of
+                [] -> 
+                    {_, Resp} = lists:keyfind(Table,1,NotFoundResponse),
+                    throw(Resp);
+                [R] ->  R
+            end;
+        _ -> throw(op_notrecognized)
+    end. 
+
+%% ---------- Lookup ---------- 
+
+lookup(Crit) ->
+    NotFoundResponse = [{char, no_character}, {room, no_room},{usr, no_user}],
+    case Crit of
+        {Table, Index, Value} -> 
+            throw(not_impl);
+        {Table, Value} ->
+            {atomic, Records} = mnesia:transaction(fun () ->
+                mnesia:read({Table, Value})
+            end),
+            case Records of
+                [] ->
+                    {_, Resp} = lists:keyfind(Table,1,NotFoundResponse),
+                    Resp;
+                [R] -> R 
+            end;
+        _ -> throw(op_notrecognized)
+    end. 
+
+%% ---------- Remove ---------- 
+
+remove(Crit) ->
+    case Crit of
+        {Table, Index, Value} -> 
+            throw(not_impl);
+        {Table, Value} ->
+            {atomic, ok} = mnesia:transaction(fun () ->
+                mnesia:delete({Table, Value})
+            end),
+            ok;
+        _ -> throw(op_notrecognized)
+    end.

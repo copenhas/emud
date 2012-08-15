@@ -16,30 +16,19 @@ insert(Usr) when is_record(Usr, usr) ->
     end.
 
 save(Usr) when is_record(Usr, usr) ->
-    {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(Usr) 
-        end),
-    ok.
-
+    emud_db:save(Usr).
+    
 remove(Username) when is_binary(Username) ->
-    {atomic, ok} = mnesia:transaction(fun () ->
-        case mnesia:read({usr, Username}) of
-            [] -> ok;
-            [Usr] -> emud_char:remove(Usr#usr.character)
-        end,
-        mnesia:delete({usr, Username})
-    end),
+    case emud_db:lookup({usr, Username}) of
+        no_user -> ok;
+        Usr -> 
+            emud_char:remove(Usr#usr.character)
+    end,
     ok.
 
 get(Username) when is_binary(Username) ->
-    {atomic, Records} = mnesia:transaction(fun () ->
-        mnesia:read({usr, Username})
-    end),
-    case Records of
-        [] -> no_user;
-        [Usr] -> Usr 
-    end.
-
+    emud_db:lookup({usr, Username}).
+    
 add_char(Usr, #char{name=CharName} = Char) when is_record(Usr, usr) ->
     UUsr = case Usr#usr.character of
         CharName -> Usr;
@@ -47,8 +36,5 @@ add_char(Usr, #char{name=CharName} = Char) when is_record(Usr, usr) ->
             ok = emud_char:remove(Usr#usr.character),
             Usr#usr{character = Char#char.name}
     end,
-    {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(UUsr),
-            mnesia:write(Char) 
-        end),
+    emud_db:save([UUsr,Char]),
     {ok, UUsr, Char}.

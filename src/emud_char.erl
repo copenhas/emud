@@ -10,32 +10,17 @@
          move/2]).
 
 get(CharName) when is_binary(CharName) ->
-    {atomic, Records} = mnesia:transaction(fun () ->
-        mnesia:read({char, CharName})
-    end),
-    case Records of
-        [] -> no_character;
-        [Char] -> Char 
-    end.
+    emud_db:lookup({char, CharName}).
 
 update(Char) when is_record(Char, char) ->
-    case mnesia:dirty_read({char, Char#char.name}) of
-        [] -> throw(no_character);
-        _ -> ok
-    end,
-    {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(Char) 
-        end),
-    ok.
+    emud_db:save(Char).
 
 remove(undefined) ->
     ok;
-remove(CharName) when is_binary(CharName) ->
-    {atomic, ok} = mnesia:transaction(fun () ->
-        mnesia:delete({char, CharName})
-    end),
-    ok.
 
+remove(CharName) when is_binary(CharName) ->
+    emud_db:remove({char, CharName}).
+    
 join_game(Char) ->
     emud_room:enter(Char#char.room, Char),
     Char.

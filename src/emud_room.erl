@@ -20,11 +20,7 @@ init() ->
     end.
 
 get(RmId) when is_binary(RmId) ->
-    {atomic, Rm} = mnesia:transaction(fun () ->
-        [Rm] = mnesia:read({room, RmId}),
-        Rm
-    end),
-    Rm.
+    emud_db:retrieve({room, RmId}).
 
 occupants(RmId) when is_binary(RmId) ->
     [CharName || {_RmId, CharName} <- ets:lookup(emud_room2Chars, RmId)].
