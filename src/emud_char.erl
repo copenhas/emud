@@ -13,6 +13,10 @@ get(CharName) when is_binary(CharName) ->
     emud_db:lookup({char, CharName}).
 
 update(Char) when is_record(Char, char) ->
+    case emud_db:lookup({char, Char#char.name, dirty}) of
+        [] -> throw(no_character);
+        _ -> ok
+    end, 
     emud_db:save(Char).
 
 remove(undefined) ->

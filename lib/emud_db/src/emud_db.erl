@@ -8,16 +8,6 @@
          retrieve/1]).
 
 %% ---------- Save ---------- 
-    
-save(Rec) when is_record(Rec, char) ->
-    case mnesia:dirty_read({char, Rec#char.name}) of
-        [] -> throw(no_character);
-        _ -> ok
-    end,
-    {atomic, ok} = mnesia:transaction(fun () ->
-            mnesia:write(Rec) 
-        end),
-    ok;
 
 %% Case where multiple saves will be in one transaction.
 %% found a case in source.
@@ -39,8 +29,6 @@ save(Rec) ->
 retrieve(Crit) -> 
     NotFoundResponse = [{char, no_character}, {room, no_room},{usr, no_user}],
     case Crit of
-        {Table, Index, Value} -> 
-            throw(not_impl);
         {Table, Value} ->
             {atomic, Records} = mnesia:transaction(fun () ->
                 mnesia:read({Table, Value})
@@ -51,6 +39,16 @@ retrieve(Crit) ->
                     throw(Resp);
                 [R] ->  R
             end;
+        {Table, Value, dirty} ->
+            Records = mnesia:dirty_read({Table, Value}),
+            case Records of
+                [] -> 
+                    {_, Resp} = lists:keyfind(Table,1,NotFoundResponse),
+                    throw(Resp);
+                [R] ->  R
+            end;
+        {Table, Index, Value} -> 
+            throw(not_impl);
         _ -> throw(op_notrecognized)
     end. 
 
@@ -59,19 +57,27 @@ retrieve(Crit) ->
 lookup(Crit) ->
     NotFoundResponse = [{char, no_character}, {room, no_room},{usr, no_user}],
     case Crit of
-        {Table, Index, Value} -> 
-            throw(not_impl);
         {Table, Value} ->
             {atomic, Records} = mnesia:transaction(fun () ->
                 mnesia:read({Table, Value})
             end),
             case Records of
-                [] ->
+                [] -> 
                     {_, Resp} = lists:keyfind(Table,1,NotFoundResponse),
                     Resp;
-                [R] -> R 
+                [R] ->  R
             end;
-        _ -> throw(op_notrecognized)
+        {Table, Value, dirty} ->
+            Records = mnesia:dirty_read({Table, Value}),
+            case Records of
+                [] -> 
+                    {_, Resp} = lists:keyfind(Table,1,NotFoundResponse),
+                    throw(Resp);
+                [R] ->  R
+            end;
+        {Table, Index, Value} -> 
+            throw(not_impl);
+         _ -> throw(op_notrecognized)
     end. 
 
 %% ---------- Remove ---------- 

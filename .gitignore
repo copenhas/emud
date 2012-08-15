@@ -5,3 +5,6 @@ ebin
 test/data/*
 data
 .test
+*.swp
+*.swap
+*.swo
