@@ -1,7 +1,7 @@
 {application, emud_db,
  [
   {description, "Houses db operations"},
-  {vsn, "1"},
+  {vsn, "%VSN%"},
   {modules, [emud_db]},
   {registered, []},
   {applications, [mnesia]},

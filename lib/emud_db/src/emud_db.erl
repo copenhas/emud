@@ -47,8 +47,8 @@ retrieve(Crit) ->
                     throw(Resp);
                 [R] ->  R
             end;
-        {Table, Index, Value} -> 
-            throw(not_impl);
+%%        {Table, Index, Value} -> 
+%%          throw(not_impl);
         _ -> throw(op_notrecognized)
     end. 
 
@@ -75,8 +75,8 @@ lookup(Crit) ->
                     throw(Resp);
                 [R] ->  R
             end;
-        {Table, Index, Value} -> 
-            throw(not_impl);
+ %%     {Table, Index, Value} -> 
+ %%         throw(not_impl);
          _ -> throw(op_notrecognized)
     end. 
 
@@ -84,8 +84,8 @@ lookup(Crit) ->
 
 remove(Crit) ->
     case Crit of
-        {Table, Index, Value} -> 
-            throw(not_impl);
+%%      {Table, Index, Value} -> 
+%%          throw(not_impl);
         {Table, Value} ->
             {atomic, ok} = mnesia:transaction(fun () ->
                 mnesia:delete({Table, Value})

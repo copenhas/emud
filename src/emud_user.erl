@@ -1,4 +1,4 @@
--module (emud_user_db).
+-module (emud_user).
 
 -include("../include/emud.hrl").
 

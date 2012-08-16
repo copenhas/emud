@@ -107,7 +107,7 @@ handle_call({new_user, SessId, Usr}, {Pid, _Tag}, State) ->
         no_session -> 
             {reply, {error, unauthorized}, State};
         #session{sess=Pid} ->
-            emud_user_db:insert(Usr),
+            emud_user:insert(Usr),
             {reply, {ok, Usr#usr.name}, State};
         _ ->
             {reply, {error, unauthorized}, State}
@@ -118,7 +118,7 @@ handle_call({login, SessId, Username, Password}, {Pid, _Tag}, State) ->
         no_session -> 
             {reply, {error, unauthorized}, State};
         #session{conn=_Conn, sess=Pid} = Session ->
-            case emud_user_db:get(Username) of
+            case emud_user:get(Username) of
                 no_user -> 
                     {reply, {error, invalid_creds}, State};
                 #usr{name=Username, password=Password} = Usr ->
