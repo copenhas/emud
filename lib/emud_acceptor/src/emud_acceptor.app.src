@@ -1,0 +1,13 @@
+{application, emud_acceptor,
+ [
+  {description, "cowboy based socket acceptor for emud system"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  cowboy
+                 ]},
+  {mod, { emud_acceptor_app, []}},
+  {env, []}
+ ]}.

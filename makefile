@@ -14,7 +14,7 @@ type:
 	typer lib/**/src/
 
 shell: build data
-	erl -env ERL_LIBS lib/ -eval "mnesia:start()" -mnesia dir "data"
+	erl -env ERL_LIBS "lib/:deps/" -mnesia dir "data" +A 4 -eval "startup:all()."
 
 tags: 
 	@ctags -R -f .tags --exclude="ebin|\.test|\.eunit" lib/
@@ -22,9 +22,11 @@ tags:
 data:
 	mkdir data
 
-init:
-	rebar get-deps
+plt:
 	dialyzer --build_plt --apps kernel erts stdlib mnesia crypto
+
+deps:
+	rebar get-deps
 
 clean: 
 	rebar clean
