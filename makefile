@@ -1,28 +1,31 @@
+SHELL := /bin/bash
 
 build: tags
 	rebar compile
 
-tests: build
-	@rm -rf .test/Mnesia.nonode@nohost
-	@mkdir -p .test/Mnesia.nonode@nohost
-	@escript test/init
-
+test: tags
+	for app in lib/*; do cd $$app; test/init.sh; cd -; done
 	rebar eunit
 
 check: build
-	dialyzer -r src --src --no_check_plt
+	dialyzer -r lib/**/src/ --src --no_check_plt
 
-types:
-	typer src
+type:
+	typer lib/**/src/
 
 shell: build data
-	erl -pa ebin -I include -eval "mnesia:start()" -mnesia dir "data"
+	erl -env ERL_LIBS lib/ -eval "mnesia:start()" -mnesia dir "data"
 
 tags: 
-	@ctags -R -f .tags src/ test/ priv/ include/
+	@ctags -R -f .tags --exclude="ebin|\.test|\.eunit" lib/
 
 data:
 	mkdir data
 
+init:
+	rebar get-deps
+	dialyzer --build_plt --apps kernel erts stdlib mnesia crypto
+
 clean: 
 	rebar clean
+	rm -rf data
