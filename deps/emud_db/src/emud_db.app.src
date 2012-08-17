@@ -1,0 +1,5 @@
+{application, emud_db,
+ [
+  {description, "Houses db operations"},
+  {vsn, "%VSN%"}
+ ]}.
