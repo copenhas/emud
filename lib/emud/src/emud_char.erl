@@ -10,20 +10,27 @@
          move/2]).
 
 get(CharName) when is_binary(CharName) ->
-    emud_db:lookup({char, CharName}).
+    emud_db:transaction(fun () ->
+                emud_db:lookup({char, CharName})
+            end).
 
 update(Char) when is_record(Char, char) ->
+    %%% |-
+    %%% Comment: Should this check and throw or call
+    %%%          emud_retrieve, which will fail if no
+    %%%          is found?
     case emud_db:lookup({char, Char#char.name, dirty}) of
-        no_character -> throw(no_character);
+        not_found -> throw(not_found);
         _ -> ok
-    end, 
-    emud_db:save(Char).
+    end,
+    %%% -|
+    emud_db:transaction(fun () -> emud_db:save(Char) end).
 
 remove(undefined) ->
     ok;
 
 remove(CharName) when is_binary(CharName) ->
-    emud_db:remove({char, CharName}).
+    emud_db:transaction(fun () -> emud_db:remove({char, CharName}) end).
     
 join_game(Char) ->
     emud_room:enter(Char#char.room, Char),

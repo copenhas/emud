@@ -27,10 +27,7 @@ when_the_db_has_a_user_test_() ->
 
 setup() ->
     helper:start_deps(),
-    mnesia:clear_table(usr),
-    mnesia:clear_table(char),
-    mnesia:clear_table(room).
-
+    emud_db_install:reset().
 
 add_user() ->
     Usr = #usr{name= <<"test">>, password= <<"password">>},
@@ -42,7 +39,7 @@ remove_user(Usr) ->
 
 
 get_a_user_returns_no_user() ->
-    ?assertEqual(no_user, emud_user:get(<<"test">>)).
+    ?assertEqual(not_found, emud_user:get(<<"test">>)).
 
 can_add_a_new_user() ->
     ?assertEqual(ok, emud_user:save(#usr{name= <<"test">>, password= <<"password">>})).
@@ -65,4 +62,4 @@ can_remove_a_user(#usr{name=Username}) ->
     ?_assertEqual(ok, emud_user:remove(Username)).
 
 removes_users_character_too(_) ->
-    ?_assertEqual(no_character, emud_char:get(<<"character">>)).
+    ?_assertEqual(not_found, emud_char:get(<<"character">>)).

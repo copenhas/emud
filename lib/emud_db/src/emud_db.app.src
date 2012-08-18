@@ -1,5 +1,6 @@
 {application, emud_db,
  [
   {description, "Houses db operations"},
-  {vsn, "%VSN%"}
+  {vsn, "%VSN%"},
+  {modules, [emud_db, emud_db_install]}
  ]}.

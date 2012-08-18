@@ -1,9 +1,10 @@
--module (emud_init).
--include("../include/emud.hrl").
+-module (emud_db_install).
+-include("../../emud/include/emud.hrl").
 
--export([init/0]).
+-export([install/0,
+         reset/0]).
 
-init() ->
+install() ->
     mnesia:create_schema([node()]),
     mnesia:start(),
 
@@ -11,3 +12,9 @@ init() ->
     mnesia:create_table(char, [{attributes, record_info(fields, char)}]),
     mnesia:create_table(room, [{attributes, record_info(fields, room)}]),
     ok.
+
+reset() ->
+    mnesia:clear_table(usr),
+    mnesia:clear_table(char),
+    mnesia:clear_table(room).
+

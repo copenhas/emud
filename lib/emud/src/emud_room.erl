@@ -20,7 +20,7 @@ init() ->
     end.
 
 get(RmId) when is_binary(RmId) ->
-    emud_db:retrieve({room, RmId}).
+    emud_db:transaction(fun () -> emud_db:retrieve({room, RmId}) end).
 
 occupants(RmId) when is_binary(RmId) ->
     [CharName || {_RmId, CharName} <- ets:lookup(emud_room2Chars, RmId)].

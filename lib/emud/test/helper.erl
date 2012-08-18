@@ -4,8 +4,7 @@
 
 start_deps() ->
     error_logger:tty(false),
+    code:add_path("../../emud_db/ebin"),
     application:load(emud_db),
     application:start(emud_db),
-    ok = mnesia:start(),
-    ok = mnesia:wait_for_tables([usr, char, room], 5000).
-    
+    emud_db:ready(5000).    
