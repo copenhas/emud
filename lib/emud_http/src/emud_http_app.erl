@@ -1,4 +1,4 @@
--module(emud_acceptor_app).
+-module(emud_http_app).
 
 -behaviour(application).
 
@@ -13,7 +13,7 @@ start(_StartType, _StartArgs) ->
     Dispatch = [
         %% {Host, list({Path, Handler, Opts})}
         {'_', [
-            {[<<"ws">>], emud_acceptor_websocket, []}
+            {[], emud_http_websocket, []}
         ]}
     ],
     %% Name, NbAcceptors, Transport, TransOpts, Protocol, ProtoOpts

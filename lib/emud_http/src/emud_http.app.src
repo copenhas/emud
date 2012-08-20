@@ -1,6 +1,6 @@
-{application, emud_acceptor,
+{application, emud_http,
  [
-  {description, "cowboy based socket acceptor for emud system"},
+  {description, "cowboy based websocket acceptor for emud system"},
   {vsn, "1"},
   {registered, []},
   {applications, [
@@ -8,6 +8,6 @@
                   stdlib,
                   cowboy
                  ]},
-  {mod, { emud_acceptor_app, []}},
+  {mod, { emud_http_app, []}},
   {env, []}
  ]}.
