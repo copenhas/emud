@@ -19,15 +19,13 @@ websocket_init(_TransportName, Req, _Opts) ->
     {ok, Req, #state{sessid = SessId, sess = Sess}}.
 
 websocket_handle({text, Msg}, Req, #state{sessid=SessId, sess=Sess} = State) ->
-    Cmd = #cmd{
-        type = list_to_atom(binary_to_list(Msg)), % totally unsafe!!!
-        sessid = SessId
-    },
-    emud_sess:handle_cmd(Sess, Cmd),
+    Cmd = emud_http_data:decode_cmd({text, Msg}),
+    emud_sess:handle_cmd(Sess, Cmd#cmd{sessid=SessId}),
     {ok, Req, State}.
 
 websocket_info({emud_msg, _Ref, Msg}, Req, State) ->
-    {reply, {text, Msg#msg.text}, Req, State}.
+    Json = emud_http_data:encode_msg(Msg),
+    {reply, {text, Json}, Req, State}.
 
 websocket_terminate(_Reason, _Req, _State) ->
     ok.
