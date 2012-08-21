@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-rm -rf .test/Mnesia.nonode@nohost
-mkdir -p .test/Mnesia.nonode@nohost
+rm -rf .eunit/Mnesia.nonode@nohost
+mkdir -p .eunit/Mnesia.nonode@nohost
 escript test/init
