@@ -1,11 +1,11 @@
 SHELL := /bin/bash
 
 build: tags
-	rebar compile
+	./rebar compile
 
 test: tags
 	for app in lib/*; do cd $$app; test/init.sh; cd -; done
-	rebar eunit
+	./rebar eunit
 
 check: build
 	dialyzer -r lib/**/src/ --src --no_check_plt
@@ -23,9 +23,9 @@ data:
 	mkdir data
 
 init:
-	rebar get-deps
+	./rebar get-deps
 	dialyzer --build_plt --apps kernel erts stdlib mnesia crypto
 
 clean: 
-	rebar clean
+	./rebar clean
 	rm -rf data
