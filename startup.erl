@@ -6,4 +6,4 @@ all() ->
     application:start(mnesia),
     application:start(cowboy),
     application:start(emud),
-    application:start(emud_acceptor).
+    application:start(emud_http).
