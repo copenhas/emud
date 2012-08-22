@@ -5,7 +5,7 @@ build: tags
 
 test: tags
 	for app in lib/*; do cd $$app; test/init.sh; cd -; done
-	ERL_LIBS=lib/:deps/ rebar eunit
+	ERL_LIBS=lib/:deps/ rebar eunit skip_deps=true
 
 check: build
 	dialyzer -r lib/**/src/ --src --no_check_plt

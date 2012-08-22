@@ -48,6 +48,8 @@ safeify([], Safe) -> Safe;
 safeify([{Key, Value} | More], Safe) ->
     safeify(More, [{to_json_safe(Key), to_json_safe(Value)} | Safe]).
 
+
+to_json_safe(undefined) -> undefined;
 to_json_safe(Value) when is_atom(Value) -> atom_to_binary(Value, utf8);
 to_json_safe(Value) when is_list(Value) -> lists:map(fun to_json_safe/1, Value);
 to_json_safe(Value) -> Value.

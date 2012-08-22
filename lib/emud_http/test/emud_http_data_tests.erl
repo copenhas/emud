@@ -21,6 +21,7 @@ decode_cmd_can_parse_login_test() ->
 encode_msg_generates_json_test() ->
     Msg = #msg {
         type = welcome,
+        source = server,
         text = <<"hello world">>
     },
     emud_http_data:encode_msg(Msg).
