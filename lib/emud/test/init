@@ -1,10 +1,7 @@
 #!/usr/bin/env escript
-%% vim: set filetype=erlang :
-%%! -mnesia dir ".test/Mnesia.nonode@nohost"
+%%! -pa ../emud_db/ebin ebin -I include -mnesia dir ".eunit/Mnesia.nonode@nohost"
 
 main([]) ->
-    code:add_path("../emud_db/ebin"),
-    %%[io:format("~p\n", [PA]) || PA <- code:get_path()],
     application:load(emud_db),
     application:start(emud_db),
 	emud_db_install:install().
