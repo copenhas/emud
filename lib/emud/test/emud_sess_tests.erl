@@ -91,6 +91,11 @@ start_session() ->
     helper:start_deps(),
     application:start(emud),
     {ok, SessId, Sess} = emud_srv:connect(),
+    receive 
+        {emud_msg, _Ref, Msg} -> ?assertMatch(#msg{type=welcome}, Msg)
+    after 1000 ->
+        throw(no_msg_found)
+    end,
     {SessId, Sess}.
 
 setup_account() ->
