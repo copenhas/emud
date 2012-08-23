@@ -131,7 +131,7 @@ join_game() ->
     {SessId, Sess, Username}.
 
 stop_session({_SessId, _Sess}) ->
-    emud_user_db:remove(<<"test">>),
+    emud_user:remove(<<"test">>),
     application:stop(emud).
 
 remove_account({SessId, Sess, _Username}) ->

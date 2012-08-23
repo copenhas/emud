@@ -55,10 +55,10 @@ remove(Char)->
 
 
 get_a_char_returns_no_char() ->
-    ?assertEqual(no_character, emud_char:get(<<"nobody">>)).
+    ?assertEqual(not_found, emud_char:get(<<"nobody">>)).
 
 can_not_update_new_char() ->
-    ?assertThrow(no_character, emud_char:update(#char{name= <<"new">>})).
+    ?assertThrow(not_found, emud_char:update(#char{name= <<"new">>})).
 
 can_remove_non_existent_user() ->
     ?assertEqual(ok, emud_char:remove(<<"nobody">>)).

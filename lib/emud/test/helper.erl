@@ -4,5 +4,6 @@
 
 start_deps() ->
     error_logger:tty(false),
-    ok = mnesia:start(),
-    ok = mnesia:wait_for_tables([usr, char, room], 5000).
+    application:load(emud_db),
+    application:start(emud_db),
+    emud_db:ready(5000).    

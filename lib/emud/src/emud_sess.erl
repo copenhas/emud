@@ -149,7 +149,7 @@ pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} 
 new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id} = State) ->
     Char = #char{name= ?CMDPROP(Cmd, name), room= <<"game start">>},
     Sess = emud_session_db:get_session(Id),
-    {ok, UUsr, UChar} = emud_user_db:add_char(Sess#session.user, Char),
+    {ok, UUsr, UChar} = emud_user:add_char(Sess#session.user, Char),
     USess = Sess#session{user = UUsr},
     emud_session_db:update_session(USess),
     {reply, {ok, UChar#char.name}, pick_character, State};
