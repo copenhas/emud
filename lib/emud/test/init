@@ -1,7 +1,6 @@
 #!/usr/bin/env escript
-%%! -pa ../emud_db/ebin ebin -I include -mnesia dir ".eunit/Mnesia.nonode@nohost"
+%%! -pa ebin -I include -mnesia dir ".eunit/Mnesia.nonode@nohost"
 
 main([]) ->
-    application:load(emud_db),
     application:start(emud_db),
 	emud_db_install:install().
