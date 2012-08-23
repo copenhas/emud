@@ -1,11 +1,13 @@
 SHELL := /bin/bash
+CWD = $(shell pwd)
+EMUD_LIBS = $(CWD)/lib/:$(CWD)/deps/
 
 build: tags
-	rebar compile
+	./rebar compile
 
 test: tags
-	for app in lib/*; do cd $$app; test/init.sh; cd -; done
-	ERL_LIBS=lib/:deps/ rebar eunit skip_deps=true
+	for app in lib/*; do cd $$app; ERL_LIBS=$(EMUD_LIBS) test/init.sh; cd -; done
+	ERL_LIBS=$(EMUD_LIBS) ./rebar eunit skip_deps=true
 
 check: build
 	dialyzer -r lib/**/src/ --src --no_check_plt
@@ -26,8 +28,8 @@ plt:
 	dialyzer --build_plt --apps kernel erts stdlib mnesia crypto
 
 deps:
-	rebar get-deps
+	./rebar get-deps
 
 clean: 
-	rebar clean
+	./rebar clean
 	rm -rf data
