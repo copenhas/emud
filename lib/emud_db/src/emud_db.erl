@@ -1,6 +1,6 @@
 -module (emud_db).
 
--include("../../emud/include/emud.hrl").
+-include_lib("emud/include/emud.hrl").
 
 -export([save/1,
          save/2,

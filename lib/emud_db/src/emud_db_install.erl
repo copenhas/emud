@@ -1,4 +1,5 @@
 -module (emud_db_install).
+
 -include_lib("emud/include/emud.hrl").
 
 -export([install/0,
