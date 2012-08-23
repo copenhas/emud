@@ -94,6 +94,11 @@ handle_call(connect, {Pid, _Tag}, State) ->
     {ok, Sess} = emud_sess_sup:start_sess(SessId, Pid),
     Session = emud_session_db:create_session(SessId, Pid, Sess),
     Reply = {ok, Session#session.id, Sess},
+    emud_conn:send(Pid, #msg{
+        type= welcome, 
+        source= server, 
+        text= <<"Welcome to EMUD\n Login or create new user: ">>
+    }),
     {reply, Reply, State};
 
 handle_call(get_session, {Pid, _Tag}, State) ->

@@ -1,0 +1,13 @@
+{application, emud_http,
+ [
+  {description, "cowboy based websocket acceptor for emud system"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  cowboy
+                 ]},
+  {mod, { emud_http_app, []}},
+  {env, []}
+ ]}.
