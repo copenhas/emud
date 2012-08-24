@@ -19,11 +19,11 @@ when_there_are_rooms_in_the_game_test_() ->
 add_room() ->
     emud_room:init(),
     Id = crypto:rand_bytes(8),
-    ok = mnesia:dirty_write(#room{id = Id}),
+    ok = emud_db:save(#room{id = Id}, dirty),
     Id.
 
 remove_room(Id) ->
-    ok = mnesia:dirty_delete({room, Id}).
+    ok = emud_db:remove({room, Id, dirty}).
 
 
 can_retrieve_a_room_by_id(Id) ->
