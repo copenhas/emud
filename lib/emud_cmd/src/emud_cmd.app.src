@@ -1,0 +1,16 @@
+{application, emud_cmd,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  emud
+                 ]},
+  {mod, { emud_cmd_app, []}},
+  {env, []},
+  {modules, [
+    emud_cmd_parser
+  ]}
+ ]}.
