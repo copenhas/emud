@@ -4,8 +4,28 @@ options {
     language = C;
 }
 
-@header {
+@includes {
+    #include <string.h>
+    #include <antlr3.h>
     #include <erl_nif.h>
+
+    #define A(text) enif_make_atom(env, text)
+    #define PROP(key, value) enif_make_tuple(env, 2, A(key), value)
+    #define BIN(token) make_binary(env, token)
+
+    ERL_NIF_TERM make_binary(ErlNifEnv *env, pANTLR3_COMMON_TOKEN token);
+}
+
+@members {
+    ERL_NIF_TERM make_binary(ErlNifEnv *env, pANTLR3_COMMON_TOKEN token) {
+        ErlNifBinary bin;
+        pANTLR3_STRING text = token->getText(token);
+        pANTLR3_STRING unicode = text->toUTF8(text);
+
+        enif_alloc_binary(unicode->len, &bin);
+        memcpy(bin.data, unicode->chars, unicode->len); 
+        return enif_make_binary(env, &bin);
+    }
 }
 
 command[ErlNifEnv *env] returns [ERL_NIF_TERM value]
@@ -15,13 +35,14 @@ command[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     ;
 
 login[ErlNifEnv *env] returns [ERL_NIF_TERM value]
-    : 'login' WS TEXT WS TEXT {
-            ERL_NIF_TERM tag = enif_make_atom(env, "cmd");
-            ERL_NIF_TERM cmd = enif_make_atom(env, "login");
-            ERL_NIF_TERM sessid = enif_make_atom(env, "undefined");
-            ERL_NIF_TERM props = enif_make_list(env, 0);
+    : 'login' WS user=TEXT WS pass=TEXT {
+            ERL_NIF_TERM userProp = PROP("user", BIN($user));
+            ERL_NIF_TERM passProp = PROP("pass", BIN($pass));
 
-            $value = enif_make_tuple(env, 4, tag, cmd, sessid, props);
+            ERL_NIF_TERM props = enif_make_list(env, 2, userProp, passProp);
+
+            $value = enif_make_tuple(env, 4, A("cmd"), A("login"), 
+                                     A("undefined"), props);
         }
     ;
 

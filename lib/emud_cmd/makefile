@@ -13,6 +13,9 @@ priv/emud_cmd_parser.so: c_src/MudParser.c c_src/emud_cmd_parser.c
 c_src/MudParser.c: c_src/Mud.g
 	antlr-3.4 c_src/Mud.g
 
+shell: build
+	erl -pa ebin
+
 clean:
 	rm c_src/Mud*.c
 	rm c_src/Mud*.h
