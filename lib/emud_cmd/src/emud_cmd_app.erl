@@ -10,7 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    ok.
+    emud_cmd_sup:start_link().
 
 stop(_State) ->
     ok.

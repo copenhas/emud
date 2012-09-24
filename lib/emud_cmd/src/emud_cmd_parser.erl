@@ -31,8 +31,5 @@ parse(_Binary) ->
 %% ===================================================================
 -ifdef(TEST).
 
-basic_test() ->
-    {ok, Ref} = new(),
-    ?assertEqual(ok, myfunction(Ref)).
 
 -endif.

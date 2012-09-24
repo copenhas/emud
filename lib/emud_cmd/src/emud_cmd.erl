@@ -1,8 +1,9 @@
 -module(emud_cmd).
 
--include("../include/emud.hrl").
+-include_lib("emud/include/emud.hrl").
 
 %% API
+-export([run/3]).
 -export([spawn_link/3]).
 
 %% Callbacks
@@ -20,6 +21,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+run(SessId, Ref, Cmd) ->
+    emud_cmd_sup:start_cmd(SessId, Ref, Cmd).
 
 %%--------------------------------------------------------------------
 %% @doc

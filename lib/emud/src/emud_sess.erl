@@ -158,7 +158,7 @@ new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id}
 
 
 in_game(#cmd{sessid=Id} = Cmd, {_Pid, Tag}, #state{id=Id} = State) ->
-    {ok, _CmdId} = emud_cmd_sup:start_cmd(Id, Tag, Cmd),
+    {ok, _CmdId} = emud_cmd:run(Id, Tag, Cmd),
     {reply, ok, in_game, State}.
 
 

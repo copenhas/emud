@@ -9,12 +9,7 @@ decode_cmd({text, Json}) when is_binary(Json) ->
     case proplists:lookup(<<"command">>, CmdProps) of
         none -> throw(invalid_cmd);
         {_, Text} ->
-            Tokens = binary:split(Text, <<" ">>),
-            {Type, Props} = parse(Tokens),
-            #cmd{ 
-                type = Type,
-                props = Props
-            }
+            emud_cmd_parser:parse(Text)
     end.
 
 

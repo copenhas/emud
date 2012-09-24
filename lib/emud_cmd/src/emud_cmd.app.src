@@ -2,7 +2,9 @@
  [
   {description, ""},
   {vsn, "1"},
-  {registered, []},
+  {registered, [
+        emud_cmd_sup
+    ]},
   {applications, [
                   kernel,
                   stdlib,
@@ -11,6 +13,8 @@
   {mod, { emud_cmd_app, []}},
   {env, []},
   {modules, [
-    emud_cmd_parser
+    emud_cmd_parser,
+    emud_cmd_look,
+    emud_cmd_move
   ]}
  ]}.
