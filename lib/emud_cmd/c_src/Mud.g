@@ -12,8 +12,11 @@ options {
     #define A(text) enif_make_atom(env, text)
     #define PROP(key, value) enif_make_tuple(env, 2, A(key), value)
     #define BIN(token) make_binary(env, token)
+    #define LIST(count, ...) enif_make_list(env, count, ##__VA_ARGS__)
 
     ERL_NIF_TERM make_binary(ErlNifEnv *env, pANTLR3_COMMON_TOKEN token);
+
+    ERL_NIF_TERM make_cmd(ErlNifEnv *env, char *cmd, ERL_NIF_TERM props);
 }
 
 @members {
@@ -26,45 +29,55 @@ options {
         memcpy(bin.data, unicode->chars, unicode->len); 
         return enif_make_binary(env, &bin);
     }
+
+    ERL_NIF_TERM make_cmd(ErlNifEnv *env, char *cmd, ERL_NIF_TERM props){
+        return enif_make_tuple(env, 4, A("cmd"), A(cmd), 
+                               A("undefined"), props);
+    }
 }
 
 command[ErlNifEnv *env] returns [ERL_NIF_TERM value]
-    : login[env] { $value = $login.value; } 
-    | look[env] { $value = $look.value; }
-    | move[env] { $value = $move.value; }
+    : cmd=login[env] { $value = $cmd.value; } 
+    | cmd=look[env] { $value = $cmd.value; }
+    | cmd=move[env] { $value = $cmd.value; }
     ;
+    catch[] {
+        $value = A("invalid_cmd");
+    }
 
 login[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'login' WS user=TEXT WS pass=TEXT {
             ERL_NIF_TERM userProp = PROP("user", BIN($user));
             ERL_NIF_TERM passProp = PROP("pass", BIN($pass));
 
-            ERL_NIF_TERM props = enif_make_list(env, 2, userProp, passProp);
+            ERL_NIF_TERM props = LIST(2, userProp, passProp);
 
-            $value = enif_make_tuple(env, 4, A("cmd"), A("login"), 
-                                     A("undefined"), props);
+            $value = make_cmd(env, "login", props);
         }
     ;
+    catch[] {}
 
 look[ErlNifEnv *env] returns [ERL_NIF_TERM value]
-    : 'look'  
-    | 'look' WS 'around' 
-    | 'look' WS 'at' WS target=TEXT 
+    : 'look' (WS 'around')? {
+            $value = make_cmd(env, "look", LIST(0));
+        }
+    | 'look' (WS 'at')? WS target=TEXT {
+            ERL_NIF_TERM obj = PROP("target", BIN($target));
+            $value = make_cmd(env, "look", LIST(1, obj));
+        }
     ;
+    catch[] {}
 
 move[ErlNifEnv *env] returns [ERL_NIF_TERM value]
-    : 'move' WS DIRECTION 
-    | DIRECTION 
+    : ('move' WS)? dir=TEXT {
+            ERL_NIF_TERM direction = PROP("exit", BIN($dir));
+            $value = make_cmd(env, "move", LIST(1, direction));
+        }
     ;
+    catch[] {}
 
 
 WS: (' ' | '\t')+;
-
-DIRECTION: 'north' | 'n'
-         | 'east' | 'e'
-         | 'south' | 's'
-         | 'west' | 'w' 
-         ;
 
 TEXT: ('a'..'z'|'A'..'Z'|'1'..'0'|'!'|'@'|'#'|'$'|'%'|'^'|'&'|'*'|'('|')')+;
 
