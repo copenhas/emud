@@ -3,10 +3,11 @@ CWD = $(shell pwd)
 EMUD_LIBS = $(CWD)/lib/:$(CWD)/deps/
 
 build: tags
+	for app in lib/*; do cd $$app; [ -a 'makefile' ] && make; cd -; done
 	./rebar compile
 
 test: tags
-	for app in lib/*; do cd $$app; ERL_LIBS=$(EMUD_LIBS) test/init.sh; cd -; done
+	for app in lib/*; do cd $$app; [ -a 'test/init.sh' ] && ERL_LIBS=$(EMUD_LIBS) test/init.sh; cd -; done
 	ERL_LIBS=$(EMUD_LIBS) ./rebar eunit skip_deps=true
 
 check: build

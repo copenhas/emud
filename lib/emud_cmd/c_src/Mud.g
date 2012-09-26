@@ -37,7 +37,11 @@ options {
 }
 
 command[ErlNifEnv *env] returns [ERL_NIF_TERM value]
-    : cmd=login[env] { $value = $cmd.value; } 
+    : cmd=new_user[env] { $value = $cmd.value; } 
+    | cmd=new_character[env] { $value = $cmd.value; } 
+    | cmd=character_name[env] { $value = $cmd.value; }
+    | cmd=pick_character[env] { $value = $cmd.value; } 
+    | cmd=login[env] { $value = $cmd.value; } 
     | cmd=look[env] { $value = $cmd.value; }
     | cmd=move[env] { $value = $cmd.value; }
     ;
@@ -45,10 +49,48 @@ command[ErlNifEnv *env] returns [ERL_NIF_TERM value]
         $value = A("invalid_cmd");
     }
 
+new_user[ErlNifEnv *env] returns [ERL_NIF_TERM value]
+    : 'create user' WS user=TEXT WS pass=TEXT {
+            ERL_NIF_TERM userProp = PROP("username", BIN($user));
+            ERL_NIF_TERM passProp = PROP("password", BIN($pass));
+
+            ERL_NIF_TERM props = LIST(2, userProp, passProp);
+
+            $value = make_cmd(env, "new_user", props);
+        }
+    ;
+    catch[] {}
+
+new_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
+    : 'new character' {
+            $value = make_cmd(env, "new_character", LIST(0));
+        }
+    ;
+
+character_name[ErlNifEnv *env] returns [ERL_NIF_TERM value]
+    : 'my name is' WS character=TEXT {
+            ERL_NIF_TERM charProp = PROP("character", BIN($character));
+
+            ERL_NIF_TERM props = LIST(1, charProp);
+
+            $value = make_cmd(env, "character_name", props);
+        }
+    ;
+
+pick_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
+    : 'join as' WS character=TEXT {
+            ERL_NIF_TERM charProp = PROP("character", BIN($character));
+
+            ERL_NIF_TERM props = LIST(1, charProp);
+
+            $value = make_cmd(env, "pick_character", props);
+        }
+    ;
+
 login[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'login' WS user=TEXT WS pass=TEXT {
-            ERL_NIF_TERM userProp = PROP("user", BIN($user));
-            ERL_NIF_TERM passProp = PROP("pass", BIN($pass));
+            ERL_NIF_TERM userProp = PROP("username", BIN($user));
+            ERL_NIF_TERM passProp = PROP("password", BIN($pass));
 
             ERL_NIF_TERM props = LIST(2, userProp, passProp);
 

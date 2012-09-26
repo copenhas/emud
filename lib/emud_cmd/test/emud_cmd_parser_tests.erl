@@ -18,8 +18,12 @@ a_non_binary_does_not_kill_the_parser_test_() ->
      ?_assertMatch(invalid_input, test(login)),
      ?_assertMatch(invalid_input, test(42))].
 
+can_parse_a_new_user_command_test() ->
+    ?assertMatch({cmd,new_user,undefined,[{username,<<"user">>},{password,<<"pass">>}]},
+                 test(<<"create user user pass">>)).
+
 can_parse_a_login_command_test() ->
-    ?assertMatch({cmd,login,undefined,[{user,<<"user">>},{pass,<<"pass">>}]},
+    ?assertMatch({cmd,login,undefined,[{username,<<"user">>},{password,<<"pass">>}]},
                  test(<<"login user pass">>)).
 
 can_parse_a_look_command_test_() ->
