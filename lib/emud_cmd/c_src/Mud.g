@@ -72,7 +72,7 @@ new_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
 
 character_name[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'my name is' WS character=TEXT {
-            ERL_NIF_TERM charProp = PROP("character", BIN($character));
+            ERL_NIF_TERM charProp = PROP("name", BIN($character));
 
             ERL_NIF_TERM props = LIST(1, charProp);
 

@@ -64,4 +64,4 @@ run(#ctxt{sessid=SessId, cmd=Cmd, ref=Ref}) ->
 look_up_cmd(CmdType) ->
     CmdName = atom_to_list(CmdType),
     ModName = "emud_cmd_" ++ CmdName,
-    list_to_atom(ModName).
+    list_to_existing_atom(ModName).
