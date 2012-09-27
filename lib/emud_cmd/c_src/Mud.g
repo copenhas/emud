@@ -1,3 +1,5 @@
+// vim:ft=antlr3
+
 grammar Mud;
 
 options {
@@ -66,6 +68,7 @@ new_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
             $value = make_cmd(env, "new_character", LIST(0));
         }
     ;
+    catch[] {}
 
 character_name[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'my name is' WS character=TEXT {
@@ -76,6 +79,7 @@ character_name[ErlNifEnv *env] returns [ERL_NIF_TERM value]
             $value = make_cmd(env, "character_name", props);
         }
     ;
+    catch[] {}
 
 pick_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'join as' WS character=TEXT {
@@ -86,6 +90,7 @@ pick_character[ErlNifEnv *env] returns [ERL_NIF_TERM value]
             $value = make_cmd(env, "pick_character", props);
         }
     ;
+    catch[] {}
 
 login[ErlNifEnv *env] returns [ERL_NIF_TERM value]
     : 'login' WS user=TEXT WS pass=TEXT {

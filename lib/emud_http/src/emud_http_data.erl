@@ -22,20 +22,6 @@ encode_msg(Msg) when is_record(Msg, msg) ->
     Json.
 
 
-parse([CmdType | Binary]) ->
-    Type = list_to_atom(binary_to_list(CmdType)),
-    parse(Binary, {Type, []}).
-        
-parse([], Parsed) -> Parsed; 
-parse([Binary], {Type, Props}) ->
-    [Key | Rest] = binary:split(Binary, <<" ">>),
-    parse(Key, Rest, {Type, Props}).
-
-parse(Key, [Binary], {Type, Props}) ->
-    [Value | Rest] = binary:split(Binary, <<" ">>),
-    parse(Rest, {Type, [{list_to_atom(binary_to_list(Key)), Value} | Props]}).
-
-
 safeify(Props) ->
     safeify(Props, []).
 
