@@ -1,7 +1,7 @@
 -module(emud_cmd_sup).
 
 -behaviour(supervisor).
--include("../include/emud.hrl").
+-include_lib("emud/include/emud.hrl").
 
 %% API
 -export([start_link/0,
@@ -24,7 +24,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
-        supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 start_cmd(SessId, Ref, Cmd) when is_reference(Ref), is_record(Cmd, cmd) ->
     supervisor:start_child(?SERVER, [SessId, Ref, Cmd]).

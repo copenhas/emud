@@ -20,8 +20,7 @@ when_emud_is_shutdown_test_() ->
     fun emud_sup_is_not_alive/0}.
 
 start_app() ->
-    helper:start_deps(),
-    ok = application:start(emud).
+    helper:start_deps().
 
 shutdown_app(_) ->
     application:stop(emud).

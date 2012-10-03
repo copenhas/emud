@@ -9,12 +9,7 @@ decode_cmd({text, Json}) when is_binary(Json) ->
     case proplists:lookup(<<"command">>, CmdProps) of
         none -> throw(invalid_cmd);
         {_, Text} ->
-            Tokens = binary:split(Text, <<" ">>),
-            {Type, Props} = parse(Tokens),
-            #cmd{ 
-                type = Type,
-                props = Props
-            }
+            emud_cmd_parser:parse(Text)
     end.
 
 
@@ -25,20 +20,6 @@ encode_msg(Msg) when is_record(Msg, msg) ->
     JsonReady = {safeify(Props)},
     {ok, Json} = json:encode(JsonReady),
     Json.
-
-
-parse([CmdType | Binary]) ->
-    Type = list_to_atom(binary_to_list(CmdType)),
-    parse(Binary, {Type, []}).
-        
-parse([], Parsed) -> Parsed; 
-parse([Binary], {Type, Props}) ->
-    [Key | Rest] = binary:split(Binary, <<" ">>),
-    parse(Key, Rest, {Type, Props}).
-
-parse(Key, [Binary], {Type, Props}) ->
-    [Value | Rest] = binary:split(Binary, <<" ">>),
-    parse(Rest, {Type, [{list_to_atom(binary_to_list(Key)), Value} | Props]}).
 
 
 safeify(Props) ->
