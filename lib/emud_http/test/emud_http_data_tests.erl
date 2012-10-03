@@ -12,7 +12,7 @@ decode_cmd_valid_json_bad_structure_blows_test() ->
     ?assertThrow(invalid_cmd, emud_http_data:decode_cmd({text, Json})).
 
 decode_cmd_can_parse_login_test() ->
-    Json = <<"{ \"command\": \"login username user password pass\" }">>,
+    Json = <<"{ \"command\": \"login user pass\" }">>,
     Result = emud_http_data:decode_cmd({text, Json}),
     ?assertMatch(login, Result#cmd.type),
     ?assertMatch(<<"pass">>, ?CMDPROP(Result, password)),

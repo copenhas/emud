@@ -111,7 +111,18 @@ init([SessId, Conn]) ->
 auth(Cmd = #cmd{type=new_user, sessid=Id}, _From, #state{id=Id} = State) ->
     Usr = #usr{name = ?CMDPROP(Cmd, username), 
                password = ?CMDPROP(Cmd, password)},
-    Reply = emud_srv:new_user(Id, Usr),
+    Reply = case emud_srv:new_user(Id, Usr) of
+        {error, Reason} ->
+            emud_conn:send(State#state.conn, #msg{type=Reason}),
+            {error, Reason};
+        Ok ->
+            emud_conn:send(State#state.conn, #msg{
+                    type=success, 
+                    source=server,
+                    text= <<"New user was created successfully\nPlease login.">>
+            }),
+            Ok
+    end,
     {reply, Reply, auth, State};
 
 auth(Cmd = #cmd{type=login, sessid=Id}, _From, #state{id=Id} = State) ->
@@ -119,14 +130,31 @@ auth(Cmd = #cmd{type=login, sessid=Id}, _From, #state{id=Id} = State) ->
                            ?CMDPROP(Cmd, username), 
                            ?CMDPROP(Cmd, password)),
     case Response of
-        {ok, _} -> {reply, Response, pick_character, State};
-        _ -> {reply, Response, auth, State}
+        {ok, _} -> 
+            emud_conn:send(State#state.conn, #msg{
+                    type=success, 
+                    source=server,
+                    text= <<"Pick an existing character or create a new one">>
+            }),
+            {reply, Response, pick_character, State};
+        _ -> 
+            emud_conn:send(State#state.conn, #msg{
+                    type=failure, 
+                    source=server,
+                    text= <<"Login failed">>
+            }),
+            {reply, Response, auth, State}
     end;
 
 ?HANDLES_INVALID(auth).
 
 
 pick_character(_Cmd = #cmd{type=new_character, sessid=Id}, _From, #state{id=Id} = State) ->
+    emud_conn:send(State#state.conn, #msg{
+            type=success, 
+            source=server,
+            text= <<"What is your name?">>
+    }),
     {reply, ok, new_character, State}; 
 
 pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} = State) ->
@@ -138,8 +166,18 @@ pick_character(Cmd = #cmd{type=pick_character, sessid=Id}, _From, #state{id=Id} 
             JoinedGame = Sess#session{character = CharName},
             emud_session_db:update_session(JoinedGame),
             emud_char:join_game(Char),
+            emud_conn:send(State#state.conn, #msg{
+                    type=success, 
+                    source=server,
+                    text= <<"You are not entering EMUD">>
+            }),
             {reply, {ok, CharName}, in_game, State};
         _ ->
+            emud_conn:send(State#state.conn, #msg{
+                    type=failture, 
+                    source=server,
+                    text= <<"Character does not exist">>
+            }),
             {reply, {error, no_character}, pick_character, State}
     end;
 
@@ -152,13 +190,18 @@ new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From, #state{id=Id}
     {ok, UUsr, UChar} = emud_user:add_char(Sess#session.user, Char),
     USess = Sess#session{user = UUsr},
     emud_session_db:update_session(USess),
+    emud_conn:send(State#state.conn, #msg{
+            type=success, 
+            source=server,
+            text= <<"You're character is ready">>
+    }),
     {reply, {ok, UChar#char.name}, pick_character, State};
 
 ?HANDLES_INVALID(new_character).
 
 
 in_game(#cmd{sessid=Id} = Cmd, {_Pid, Tag}, #state{id=Id} = State) ->
-    {ok, _CmdId} = emud_cmd_sup:start_cmd(Id, Tag, Cmd),
+    {ok, _CmdId} = emud_cmd:run(Id, Tag, Cmd),
     {reply, ok, in_game, State}.
 
 

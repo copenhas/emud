@@ -1,8 +1,9 @@
 -module(emud_cmd).
 
--include("../include/emud.hrl").
+-include_lib("emud/include/emud.hrl").
 
 %% API
+-export([run/3]).
 -export([spawn_link/3]).
 
 %% Callbacks
@@ -20,6 +21,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+run(SessId, Ref, Cmd) ->
+    emud_cmd_sup:start_cmd(SessId, Ref, Cmd).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -60,4 +64,4 @@ run(#ctxt{sessid=SessId, cmd=Cmd, ref=Ref}) ->
 look_up_cmd(CmdType) ->
     CmdName = atom_to_list(CmdType),
     ModName = "emud_cmd_" ++ CmdName,
-    list_to_atom(ModName).
+    list_to_existing_atom(ModName).

@@ -1,6 +1,6 @@
 -module (emud_cmd_move).
 
--include("../include/emud.hrl").
+-include_lib("emud/include/emud.hrl").
 
 -export ([execute/4]).
 

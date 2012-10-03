@@ -4,6 +4,7 @@
 
 start_deps() ->
     error_logger:tty(false),
-    application:load(emud_db),
     application:start(emud_db),
-    emud_db:ready(5000).    
+    emud_db:ready(5000),
+    application:start(emud),
+    application:start(emud_cmd).
