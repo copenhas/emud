@@ -107,7 +107,7 @@ handle_call({login, SessId, Username, Password}, {Pid, _Tag}, State) ->
     case emud_session_db:get_session(SessId) of
         no_session -> 
             {reply, {error, unauthorized}, State};
-        #session{conn=_Conn, sess=Pid} = Session ->
+        Session ->
             case emud_user:get(Username) of
                 no_user -> 
                     {reply, {error, invalid_creds}, State};

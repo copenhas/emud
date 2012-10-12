@@ -24,7 +24,11 @@
 
 -define(SERVER, ?MODULE).
 
+-define(HANDLES_CMD(StateName, CmdName), StateName(Cmd = #cmd{type=CmdName}, From, State) -> run_cmd(Cmd, From, State)).
+
 -define(HANDLES_INVALID(StateName), StateName(_Cmd, _From, State) -> {reply, {error, invalid_cmd}, StateName, State}).
+
+-define(PROGRESS_TO(StateName, NextState), StateName({progress, Id}, _From, #state{id=Id} = State) -> {reply, ok, NextState, State}).
 
 -record(state, {
         id, 
@@ -57,7 +61,7 @@ handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
     gen_fsm:sync_send_event(Sess, Cmd).
 
 progress(Sess, SessId) when is_pid(Sess) ->
-    gen_fsm:sync_send_event(Sess, SessId).
+    gen_fsm:sync_send_event(Sess, {progress, SessId}).
 
 get_state(Sess, SessId) when is_pid(Sess) ->
     gen_fsm:sync_send_all_state_event(Sess, {get_state, SessId}).
@@ -153,32 +157,9 @@ init([SessId, Conn]) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-auth(Cmd = #cmd{type=new_user}, From, #state{runcmd=RunCmd} = State) ->
-    CmdId = RunCmd(Cmd, From),
-    Updated = [CmdId | State#state.activecmds],
-    {reply, CmdId, auth, State#state{activecmds=Updated}};
-
-auth(Cmd = #cmd{type=login, sessid=Id}, _From, #state{id=Id, sendmsg=SendMsg} = State) ->
-    Response = emud_srv:login(Id,
-                              ?CMDPROP(Cmd, username), 
-                              ?CMDPROP(Cmd, password)),
-    case Response of
-        {ok, _} -> 
-            SendMsg(#msg{
-                type=success, 
-                source=server,
-                text= <<"Pick an existing character or create a new one">>
-            }),
-            {reply, Response, pick_character, State};
-        _ -> 
-            SendMsg(#msg{
-                type=failure, 
-                source=server,
-                text= <<"Login failed">>
-            }),
-            {reply, Response, auth, State}
-    end;
-
+?HANDLES_CMD(auth, new_user);
+?HANDLES_CMD(auth, login);
+?PROGRESS_TO(auth, pick_character);
 ?HANDLES_INVALID(auth).
 
 
@@ -339,3 +320,8 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+run_cmd(Cmd, From, State) ->
+    #state{runcmd=RunCmd} = State,
+    CmdId = RunCmd(Cmd, From),
+    Updated = [CmdId | State#state.activecmds],
+    {reply, CmdId, auth, State#state{activecmds=Updated}}.
