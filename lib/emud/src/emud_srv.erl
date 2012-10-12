@@ -8,7 +8,6 @@
          terminate/0,
          connect/0,
          get_session/0,
-         new_user/2,
          login/3,
          logout/1]).
 
@@ -46,9 +45,6 @@ connect() ->
 
 get_session() ->
     gen_server:call(?SERVER, get_session).
-
-new_user(SessId, Usr) when is_record(Usr, usr) ->
-    gen_server:call(?SERVER, {new_user, SessId, Usr}).
 
 login(SessId, Username, Password) when is_binary(Username), is_binary(Password) ->
     gen_server:call(?SERVER, {login, SessId, Username, Password}).
@@ -105,17 +101,6 @@ handle_call(get_session, {Pid, _Tag}, State) ->
     case emud_session_db:get_session(Pid) of
         no_session -> {reply, no_session, State};
         Session -> {reply, {ok, Session#session.id}, State}
-    end;
-
-handle_call({new_user, SessId, Usr}, {Pid, _Tag}, State) ->
-    case emud_session_db:get_session(SessId) of
-        no_session -> 
-            {reply, {error, unauthorized}, State};
-        #session{sess=Pid} ->
-            emud_user:insert(Usr),
-            {reply, {ok, Usr#usr.name}, State};
-        _ ->
-            {reply, {error, unauthorized}, State}
     end;
 
 handle_call({login, SessId, Username, Password}, {Pid, _Tag}, State) ->

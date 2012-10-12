@@ -33,4 +33,5 @@ safeify([{Key, Value} | More], Safe) ->
 to_json_safe(undefined) -> undefined;
 to_json_safe(Value) when is_atom(Value) -> atom_to_binary(Value, utf8);
 to_json_safe(Value) when is_list(Value) -> lists:map(fun to_json_safe/1, Value);
+to_json_safe(Value) when is_reference(Value) -> list_to_binary(erlang:ref_to_list(Value)); 
 to_json_safe(Value) -> Value.

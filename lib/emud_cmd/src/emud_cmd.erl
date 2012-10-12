@@ -3,17 +3,16 @@
 -include_lib("emud/include/emud.hrl").
 
 %% API
--export([run/3]).
--export([spawn_link/3]).
+-export([run/2]).
+-export([spawn_link/2]).
 
 %% Callbacks
--export ([init/3]).
+-export ([init/2]).
 
 
 % context data for the command
--record(ctxt, {
-        sessid,
-        ref,
+-record(state, {
+        ctxt,
         cmd,
         dbg
     }).
@@ -22,8 +21,9 @@
 %%% API
 %%%===================================================================
 
-run(SessId, Ref, Cmd) ->
-    emud_cmd_sup:start_cmd(SessId, Ref, Cmd).
+run(Ctxt, Cmd) when is_record(Ctxt, cmdctxt), is_record(Cmd, cmd) ->
+    {ok, Pid} = emud_cmd_sup:start_cmd(Ctxt, Cmd),
+    Pid.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -32,33 +32,30 @@ run(SessId, Ref, Cmd) ->
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-spawn_link(SessId, Ref, Cmd) ->
-    {ok, proc_lib:spawn_link(emud_cmd, init, [SessId, Ref, Cmd])}.
+spawn_link(Ctxt, Cmd) ->
+    {ok, proc_lib:spawn_link(emud_cmd, init, [Ctxt, Cmd])}.
 
 
 %%%===================================================================
 %%% Callbacks
 %%%===================================================================
 
-init(SessId, Ref, Cmd) ->
-    Context = #ctxt{sessid=SessId, 
-                   ref=Ref, 
+init(Ctxt, Cmd) ->
+    Context = #state{
+                   ctxt=Ctxt,
                    cmd=Cmd,
                    dbg=sys:debug_options([])},
 
-    run(Context).
+    execute(Ctxt, Cmd).
 
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-run(#ctxt{sessid=SessId, cmd=Cmd, ref=Ref}) ->
+execute(Ctxt, Cmd) ->
     Mod = look_up_cmd(Cmd#cmd.type),
-    Sess = emud_session_db:get_session(SessId),
-    Char = emud_char:get(Sess#session.character),
-
-    Mod:execute(Sess, Char, Cmd, Ref).
+    Mod:execute(Ctxt, Cmd).
 
 
 look_up_cmd(CmdType) ->

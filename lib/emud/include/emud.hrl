@@ -13,8 +13,15 @@
 % cmd's are how the user causes effects to the system
 -record(cmd, {
         type, % atom()
-        sessid, % sessiondid()
+        sessid, % sessionid()
         props=[] % list({key,value})
+    }).
+
+-record(cmdctxt, {
+        cmdref, % reference()
+        sessid, % sessionid()
+        sendmsg, % fun/1
+        progress % fun/0
     }).
 
 % system msg which can be generated from anything, 

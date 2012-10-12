@@ -6,6 +6,7 @@
 %% API
 -export([start_link/2,
          handle_cmd/2,
+         progress/2,
          get_state/2]).
 
 %% gen_fsm callbacks
@@ -25,7 +26,13 @@
 
 -define(HANDLES_INVALID(StateName), StateName(_Cmd, _From, State) -> {reply, {error, invalid_cmd}, StateName, State}).
 
--record(state, {id, conn, sendmsg, runcmd}).
+-record(state, {
+        id, 
+        conn, 
+        activecmds = [],
+        runcmd,
+        sendmsg
+   }).
 
 %%%===================================================================
 %%% API
@@ -49,6 +56,9 @@ handle_cmd(Sess, #cmd{type=logout} = Cmd) when is_pid(Sess) ->
 handle_cmd(Sess, Cmd) when is_pid(Sess), is_record(Cmd, cmd) ->
     gen_fsm:sync_send_event(Sess, Cmd).
 
+progress(Sess, SessId) when is_pid(Sess) ->
+    gen_fsm:sync_send_event(Sess, SessId).
+
 get_state(Sess, SessId) when is_pid(Sess) ->
     gen_fsm:sync_send_all_state_event(Sess, {get_state, SessId}).
 
@@ -70,11 +80,28 @@ get_state(Sess, SessId) when is_pid(Sess) ->
 %% @end
 %%--------------------------------------------------------------------
 init([SessId, Conn]) ->
-    SendMsg = fun(Msg) -> emud_conn:send(Conn, Msg) end,
+    Self = self(),
+
+    Progress = fun() -> 
+            emud_sess:progress(Self, SessId)
+         end,
+
     RunCmd = fun(#cmd{sessid=CmdSessId} = Cmd, {_Pid, Tag}) ->
+            SendMsg = fun(Msg) -> 
+                    WithCmdRef = Msg#msg{cmdref=Tag},
+                    emud_conn:send(Conn, WithCmdRef) 
+                end,
+            Ctxt = #cmdctxt{
+                    cmdref=Tag,
+                    sessid=SessId,
+                    sendmsg=SendMsg,
+                    progress=Progress
+                },
             case CmdSessId of
                 SessId ->
-                    emud_cmd:run(SessId, Tag, Cmd);
+                    Pid = emud_cmd:run(Ctxt, Cmd),
+                    monitor(process, Pid),
+                    Tag;
                 _ ->
                   {error, invalid_cmd}
             end
@@ -83,8 +110,12 @@ init([SessId, Conn]) ->
     {ok, auth, #state{
         id = SessId, 
         conn = Conn,
-        sendmsg = SendMsg,
-        runcmd = RunCmd}}.
+        activecmds = [],
+        runcmd = RunCmd,
+        sendmsg = fun(Msg) -> 
+                    emud_conn:send(Conn, Msg) 
+                end
+    }}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -122,22 +153,10 @@ init([SessId, Conn]) ->
 %%                   {stop, Reason, Reply, NewState}
 %% @end
 %%--------------------------------------------------------------------
-auth(Cmd = #cmd{type=new_user, sessid=Id}, _From, #state{id=Id, sendmsg=SendMsg} = State) ->
-    Usr = #usr{name = ?CMDPROP(Cmd, username), 
-               password = ?CMDPROP(Cmd, password)},
-    Reply = case emud_srv:new_user(Id, Usr) of
-        {error, Reason} ->
-            SendMsg(#msg{type=Reason}),
-            {error, Reason};
-        Ok ->
-            SendMsg(#msg{
-                type=success, 
-                source=server,
-                text= <<"New user was created successfully\nPlease login.">>
-            }),
-            Ok
-    end,
-    {reply, Reply, auth, State};
+auth(Cmd = #cmd{type=new_user}, From, #state{runcmd=RunCmd} = State) ->
+    CmdId = RunCmd(Cmd, From),
+    Updated = [CmdId | State#state.activecmds],
+    {reply, CmdId, auth, State#state{activecmds=Updated}};
 
 auth(Cmd = #cmd{type=login, sessid=Id}, _From, #state{id=Id, sendmsg=SendMsg} = State) ->
     Response = emud_srv:login(Id,
@@ -221,12 +240,9 @@ new_character(#cmd{type=character_name, sessid = Id} = Cmd, _From,
 
 
 in_game(Cmd, From, #state{runcmd=RunCmd} = State) ->
-    case RunCmd(Cmd, From) of
-        {ok, _CmdId} ->
-            {reply, ok, in_game, State};
-        {error, _Reason} = Error ->
-            {reply, Error, in_game, state}
-    end.
+    CmdId = RunCmd(Cmd, From),
+    Updated = [CmdId | State#state.activecmds],
+    {reply, CmdId, in_game, State#state{activecmds=Updated}}.
 
 
 %%--------------------------------------------------------------------
@@ -289,8 +305,9 @@ handle_sync_event({get_state, _SessId}, _From, StateName, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(none, StateName, State) ->
-        {next_state, StateName, State}.
+handle_info({'DOWN', _MonitorRef, _Type, CmdId, _Info}, StateName, State) ->
+        Updated = lists:delete(CmdId, State#state.activecmds),
+        {next_state, StateName, State#state{activecmds=Updated}}.
 
 %%--------------------------------------------------------------------
 %% @private
